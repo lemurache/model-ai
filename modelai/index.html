@@ -225,13 +225,22 @@
 
         <!-- Video result area -->
         <div id="videoResultArea" style="display:none;margin-bottom:1rem;">
-          <video id="mainPageVideo" controls style="width:100%;border-radius:var(--radius-lg);max-height:400px;background:#000;"></video>
-          <div style="display:flex;gap:8px;margin-top:8px;">
-            <a id="mainPageDownload" class="btn btn-generate" style="flex:1;justify-content:center;text-decoration:none;" download="fractal-video.mp4">
+          <video id="mainPageVideo" controls playsinline style="width:100%;border-radius:var(--radius-lg);max-height:400px;background:#000;"></video>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:10px;">
+            <button class="btn btn-generate" onclick="downloadVideo()" style="justify-content:center;">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Download video
-            </a>
-            <button class="btn btn-outline" onclick="document.getElementById('videoResultArea').style.display='none'">Generate another</button>
+              Download
+            </button>
+            <button class="btn btn-outline" onclick="saveVideoToModel()" style="justify-content:center;border-color:var(--border-gold);color:var(--gold);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+              Save to model
+            </button>
+            <button class="btn btn-outline" onclick="document.getElementById('videoResultArea').style.display='none'" style="justify-content:center;">
+              Generate another
+            </button>
+          </div>
+          <div id="saveVideoSuccess" style="display:none;margin-top:8px;background:var(--gold-bg);border:0.5px solid var(--gold-border);border-radius:var(--radius);padding:8px 14px;font-size:12.5px;color:var(--gold);text-align:center;">
+            ✓ Video saved to your model's gallery!
           </div>
         </div>
 
