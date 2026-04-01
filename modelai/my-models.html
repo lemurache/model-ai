@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Models — Fractal</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    .models-page { max-width: 1160px; margin: 0 auto; padding: 0 2rem 6rem; }
+
+    .empty-state {
+      text-align: center; padding: 6rem 2rem;
+      border: 0.5px dashed var(--border-md);
+      border-radius: var(--radius-xl);
+      background: var(--surface-2);
+    }
+    .empty-icon { font-size: 48px; margin-bottom: 1rem; opacity: 0.4; }
+    .empty-title { font-family: var(--font-display); font-size: 28px; font-weight: 300; color: var(--text); margin-bottom: 0.5rem; }
+    .empty-sub { font-size: 14px; color: var(--text-2); margin-bottom: 2rem; }
+
+    .model-full-card {
+      background: var(--surface-2);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-xl);
+      overflow: hidden;
+      transition: all 0.2s;
+    }
+    .model-full-card:hover { border-color: var(--border-gold); box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
+
+    .model-full-img {
+      width: 100%; height: 320px;
+      background-size: cover; background-position: center top;
+      position: relative; display: flex; align-items: center; justify-content: center;
+    }
+    .model-full-img .no-img { font-size: 64px; opacity: 0.4; }
+
+    .model-overlay {
+      position: absolute; inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 50%);
+    }
+    .model-overlay-content {
+      position: absolute; bottom: 0; left: 0; right: 0; padding: 1.25rem;
+    }
+    .model-overlay-name { font-family: var(--font-display); font-size: 22px; font-weight: 300; color: #fff; margin-bottom: 2px; }
+    .model-overlay-niche { font-size: 11px; color: rgba(255,255,255,0.6); letter-spacing: 1px; text-transform: uppercase; }
+
+    .model-full-body { padding: 1.25rem; }
+    .model-full-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 1.25rem; }
+    .mfs { background: var(--surface-3); border-radius: var(--radius); padding: 10px; text-align: center; border: 0.5px solid var(--border); }
+    .mfs strong { display: block; font-family: var(--font-display); font-size: 18px; font-weight: 300; color: var(--gold); }
+    .mfs span { font-size: 10px; color: var(--text-3); letter-spacing: 0.5px; text-transform: uppercase; }
+
+    .model-full-prompt {
+      font-size: 12px; color: var(--text-3); line-height: 1.6;
+      background: var(--surface-3); border-radius: var(--radius);
+      padding: 10px 12px; margin-bottom: 1.25rem;
+      border: 0.5px solid var(--border);
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+
+    .model-full-actions { display: flex; gap: 8px; }
+    .model-full-actions .btn { flex: 1; justify-content: center; font-size: 13px; }
+
+    .delete-btn {
+      padding: 8px 12px; border-radius: var(--radius);
+      border: 0.5px solid rgba(226,75,74,0.3);
+      background: transparent; color: rgba(226,75,74,0.7);
+      cursor: pointer; font-size: 12px; transition: all 0.15s;
+      font-family: var(--font-body);
+    }
+    .delete-btn:hover { background: rgba(226,75,74,0.1); color: #F09595; }
+
+    .models-full-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 20px;
+    }
+
+    .page-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 3rem 0 2rem; flex-wrap: wrap; gap: 1rem;
+    }
+    .page-header h1 { font-family: var(--font-display); font-size: clamp(28px,4vw,48px); font-weight: 300; color: var(--text); }
+    .page-header p { font-size: 13px; color: var(--text-3); }
+
+    .stats-bar {
+      display: flex; gap: 2rem; margin-bottom: 2.5rem;
+      padding: 1.25rem 1.5rem;
+      background: var(--surface-2); border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg); flex-wrap: wrap;
+    }
+    .stats-bar-item { display: flex; flex-direction: column; gap: 2px; }
+    .stats-bar-item strong { font-family: var(--font-display); font-size: 24px; font-weight: 300; color: var(--gold); }
+    .stats-bar-item span { font-size: 11px; color: var(--text-3); letter-spacing: 0.5px; }
+    .stats-bar-div { width: 0.5px; background: var(--border-md); align-self: stretch; }
+
+    .loading-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px,1fr)); gap: 20px;
+    }
+    .loading-card {
+      background: var(--surface-2); border: 0.5px solid var(--border);
+      border-radius: var(--radius-xl); overflow: hidden;
+    }
+    .loading-img { height: 320px; background: var(--surface-3); animation: shimmer 1.5s infinite; }
+    .loading-body { padding: 1.25rem; display: flex; flex-direction: column; gap: 10px; }
+    .loading-line { height: 14px; background: var(--surface-3); border-radius: 4px; animation: shimmer 1.5s infinite; }
+    .loading-line.short { width: 60%; }
+    @keyframes shimmer { 0%,100%{opacity:0.4} 50%{opacity:0.8} }
+
+    .content-modal-overlay {
+      position: fixed; inset: 0; z-index: 200;
+      background: rgba(0,0,0,0.75);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.2s;
+    }
+    .content-modal-overlay.show { opacity: 1; pointer-events: all; }
+    .content-modal {
+      background: var(--surface-2); border: 0.5px solid var(--border-md);
+      border-radius: var(--radius-xl); padding: 2rem;
+      max-width: 600px; width: 94%;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+      transform: scale(0.96); transition: transform 0.2s;
+    }
+    .content-modal-overlay.show .content-modal { transform: scale(1); }
+    .content-modal-title { font-family: var(--font-display); font-size: 24px; font-weight: 300; margin-bottom: 0.5rem; color: var(--text); }
+    .content-modal-sub { font-size: 13px; color: var(--text-2); margin-bottom: 1.5rem; }
+    .content-scenarios-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px,1fr)); gap: 10px; margin-bottom: 1.5rem; }
+    .cs-card {
+      background: var(--surface-3); border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg); overflow: hidden;
+      cursor: pointer; transition: all 0.15s;
+    }
+    .cs-card:hover { border-color: var(--border-gold); transform: translateY(-2px); }
+    .cs-img { height: 90px; display: flex; align-items: center; justify-content: center; font-size: 28px; position: relative; }
+    .cs-type { position: absolute; top: 5px; right: 5px; font-size: 9px; background: rgba(0,0,0,0.6); color: rgba(255,255,255,0.8); padding: 2px 6px; border-radius: 999px; }
+    .cs-info { padding: 8px; }
+    .cs-name { font-size: 11.5px; font-weight: 500; color: var(--text); }
+    .cs-cost { font-size: 10.5px; color: var(--gold); margin-top: 1px; }
+    .content-modal-close { width: 100%; padding: 11px; border-radius: var(--radius); border: 0.5px solid var(--border-md); background: var(--surface-3); color: var(--text-2); cursor: pointer; font-family: var(--font-body); font-size: 13.5px; transition: all 0.15s; }
+    .content-modal-close:hover { border-color: var(--border-gold); color: var(--text); }
+  </style>
+</head>
+<body>
+
+  <header class="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="logo">FRACTAL</a>
+      <nav class="nav-links">
+        <a href="index.html">Generate</a>
+        <a href="explore.html">Explore</a>
+        <a href="my-models.html" class="active">My Models</a>
+        <a href="trends.html">Trends</a>
+        <a href="pricing.html">Pricing</a>
+      </nav>
+      <div class="nav-actions">
+        <div class="lang-picker" id="langPicker">
+          <button class="lang-btn" id="langBtn">
+            <span id="langFlag">🇬🇧</span><span id="langCode">EN</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="lang-dropdown" id="langDropdown"></div>
+        </div>
+        <span class="credit-badge"><span id="userCredits">0</span> credits</span>
+        <a href="login.html" class="btn btn-outline">Log in</a>
+        <a href="login.html" class="btn btn-dark">Start free</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="models-page">
+    <div class="page-header">
+      <div>
+        <h1>My Models</h1>
+        <p>All your saved AI influencers in one place</p>
+      </div>
+      <a href="index.html" class="btn btn-dark">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Create new model
+      </a>
+    </div>
+
+    <!-- STATS BAR -->
+    <div class="stats-bar" id="statsBar" style="display:none;">
+      <div class="stats-bar-item"><strong id="totalModels">0</strong><span>Total models</span></div>
+      <div class="stats-bar-div"></div>
+      <div class="stats-bar-item"><strong id="totalReach">0</strong><span>Combined reach</span></div>
+      <div class="stats-bar-div"></div>
+      <div class="stats-bar-item"><strong id="avgEngagement">0%</strong><span>Avg engagement</span></div>
+      <div class="stats-bar-div"></div>
+      <div class="stats-bar-item"><strong id="totalContent">0</strong><span>Content generated</span></div>
+    </div>
+
+    <!-- LOADING STATE -->
+    <div class="loading-grid" id="loadingGrid">
+      <div class="loading-card"><div class="loading-img"></div><div class="loading-body"><div class="loading-line"></div><div class="loading-line short"></div></div></div>
+      <div class="loading-card"><div class="loading-img"></div><div class="loading-body"><div class="loading-line"></div><div class="loading-line short"></div></div></div>
+      <div class="loading-card"><div class="loading-img"></div><div class="loading-body"><div class="loading-line"></div><div class="loading-line short"></div></div></div>
+    </div>
+
+    <!-- MODELS GRID -->
+    <div class="models-full-grid hidden" id="modelsFullGrid"></div>
+
+    <!-- EMPTY STATE -->
+    <div class="empty-state hidden" id="emptyState">
+      <div class="empty-icon">👗</div>
+      <h2 class="empty-title">No models yet</h2>
+      <p class="empty-sub">Generate your first AI influencer and save it to see it here.</p>
+      <a href="index.html" class="btn btn-dark">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        Generate my first model
+      </a>
+    </div>
+  </div>
+
+  <!-- GENERATE CONTENT MODAL -->
+  <div class="content-modal-overlay" id="contentModal">
+    <div class="content-modal">
+      <h3 class="content-modal-title" id="contentModalTitle">Generate content</h3>
+      <p class="content-modal-sub" id="contentModalSub">Choose a scenario for your model</p>
+      <div class="content-scenarios-grid" id="contentScenariosGrid"></div>
+      <button class="content-modal-close" onclick="closeContentModal()">Close</button>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="logo">FRACTAL</div>
+      <p class="footer-tagline">Virtual influencers. Real reach.</p>
+      <div class="footer-links"><a href="#">Terms</a><a href="#">Privacy</a><a href="#">Contact</a></div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/i18n.js"></script>
+  <script>
+    const CONTENT_SCENARIOS = [
+      { id:'pool', label:'Pool day', icon:'🏊', cost:5, type:'video', grad:'grad-blue' },
+      { id:'beach', label:'Beach sunset', icon:'🌅', cost:5, type:'video', grad:'grad-amber' },
+      { id:'grwm', label:'GRWM night out', icon:'🌙', cost:5, type:'video', grad:'grad-purple' },
+      { id:'outfit', label:'Outfit check', icon:'💅', cost:3, type:'photo', grad:'grad-pink' },
+      { id:'studio', label:'Studio shoot', icon:'📸', cost:3, type:'photo', grad:'grad-coral' },
+      { id:'gym', label:'Gym workout', icon:'💪', cost:3, type:'photo', grad:'grad-teal' },
+      { id:'restaurant', label:'Luxury dinner', icon:'🍾', cost:5, type:'video', grad:'grad-green' },
+      { id:'travel', label:'Travel vlog', icon:'✈️', cost:8, type:'video', grad:'grad-amber' },
+    ];
+
+    let models = [];
+    let activeModelId = null;
+
+    async function loadModels() {
+      // Try from localStorage first
+      const local = JSON.parse(localStorage.getItem('modelai_saved') || '[]');
+
+      // Try from Supabase if logged in
+      try {
+        const { data: { session } } = await sb.auth.getSession();
+        if (session) {
+          const res = await fetch('/api/get-models', {
+            headers: { 'Authorization': `Bearer ${session.access_token}` }
+          });
+          const data = await res.json();
+          if (data.success && data.models?.length) {
+            // Merge Supabase + local, deduplicate by id
+            const supabaseModels = data.models.map(m => ({
+              id: m.id, name: m.name, niche: m.niche,
+              nicheLabel: getNicheLabel(m.niche), prompt: m.prompt,
+              imageData: m.image_url, saved: true,
+              reach: formatReach(Math.floor(Math.random()*3000+500)*1000),
+              engagement: (Math.random()*10+5).toFixed(1)+'%',
+              posts: Math.floor(Math.random()*50),
+              createdAt: m.created_at
+            }));
+            models = [...supabaseModels, ...local.filter(l => !supabaseModels.find(s => s.id === l.id))];
+          } else {
+            models = local;
+          }
+        } else {
+          models = local;
+        }
+      } catch(e) {
+        models = local;
+      }
+
+      renderPage();
+    }
+
+    function getNicheLabel(niche) {
+      const map = { glam:'Glam & Bodycon', swimwear:'Swimwear & Beach', beach:'Beach Lifestyle', summer:'Summer Fashion', fashion:'Fashion & Style', fitness:'Fitness & Wellness', beauty:'Beauty & Makeup', food:'Food & Lifestyle', travel:'Travel & Adventure', tech:'Tech & Gadgets' };
+      return map[niche] || niche;
+    }
+
+    function formatReach(num) {
+      if(num>=1000000) return (num/1000000).toFixed(1)+'M';
+      if(num>=1000) return (num/1000).toFixed(0)+'K';
+      return num.toString();
+    }
+
+    function renderPage() {
+      document.getElementById('loadingGrid').classList.add('hidden');
+
+      if (models.length === 0) {
+        document.getElementById('emptyState').classList.remove('hidden');
+        return;
+      }
+
+      // Stats
+      const statsBar = document.getElementById('statsBar');
+      statsBar.style.display = 'flex';
+      document.getElementById('totalModels').textContent = models.length;
+      document.getElementById('totalReach').textContent = formatReach(models.reduce((acc, m) => {
+        const r = parseFloat((m.reach || '0').replace(/[KM]/g, d => d==='K'?'000':'000000')) || 0;
+        return acc + r;
+      }, 0));
+      document.getElementById('avgEngagement').textContent = (models.reduce((a,m) => a + parseFloat(m.engagement||0), 0) / models.length).toFixed(1) + '%';
+      document.getElementById('totalContent').textContent = models.reduce((a,m) => a + (m.posts||0), 0);
+
+      // Grid
+      const grid = document.getElementById('modelsFullGrid');
+      grid.classList.remove('hidden');
+      grid.innerHTML = models.map(m => {
+        const hasImg = m.imageData || m.image_url;
+        const imgStyle = hasImg ? `background-image:url(${m.imageData||m.image_url});background-size:cover;background-position:center top;` : '';
+        const gradClass = hasImg ? '' : 'grad-amber';
+        return `
+          <div class="model-full-card" id="card-${m.id}">
+            <div class="model-full-img ${gradClass}" style="${imgStyle}">
+              ${!hasImg ? '<div class="no-img">👱‍♀️</div>' : ''}
+              <div class="model-overlay"></div>
+              <div class="model-overlay-content">
+                <div class="model-overlay-name">${m.name}</div>
+                <div class="model-overlay-niche">${m.nicheLabel || m.niche}</div>
+              </div>
+            </div>
+            <div class="model-full-body">
+              <div class="model-full-stats">
+                <div class="mfs"><strong>${m.reach||'—'}</strong><span>Reach</span></div>
+                <div class="mfs"><strong>${m.engagement||'—'}</strong><span>Engagement</span></div>
+                <div class="mfs"><strong>${m.posts||0}</strong><span>Posts</span></div>
+              </div>
+              ${m.prompt ? `<div class="model-full-prompt">${m.prompt}</div>` : ''}
+              <div class="model-full-actions">
+                <button class="btn btn-generate" onclick="openContentModal('${m.id}', '${m.name}')">Generate content</button>
+                <button class="delete-btn" onclick="deleteModel('${m.id}')">Delete</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function openContentModal(modelId, modelName) {
+      activeModelId = modelId;
+      document.getElementById('contentModalTitle').textContent = `Generate with ${modelName}`;
+      document.getElementById('contentModalSub').textContent = 'Choose a scenario — each generates a photo or video with your model';
+      const grid = document.getElementById('contentScenariosGrid');
+      grid.innerHTML = CONTENT_SCENARIOS.map(s => `
+        <div class="cs-card" onclick="generateContent('${s.id}')">
+          <div class="cs-img ${s.grad}">
+            <span>${s.icon}</span>
+            <span class="cs-type">${s.type === 'video' ? '▶ Video' : '📸 Photo'}</span>
+          </div>
+          <div class="cs-info">
+            <div class="cs-name">${s.label}</div>
+            <div class="cs-cost">${s.cost} credits</div>
+          </div>
+        </div>
+      `).join('');
+      document.getElementById('contentModal').classList.add('show');
+    }
+
+    function closeContentModal() {
+      document.getElementById('contentModal').classList.remove('show');
+    }
+
+    function generateContent(scenarioId) {
+      closeContentModal();
+      alert(`Generating ${scenarioId} content... This feature is coming soon with video AI integration!`);
+    }
+
+    function deleteModel(id) {
+      if (!confirm('Are you sure you want to delete this model?')) return;
+      models = models.filter(m => String(m.id) !== String(id));
+      localStorage.setItem('modelai_saved', JSON.stringify(models.filter(m => m.saved)));
+      document.getElementById(`card-${id}`)?.remove();
+      if (models.length === 0) {
+        document.getElementById('modelsFullGrid').classList.add('hidden');
+        document.getElementById('emptyState').classList.remove('hidden');
+      }
+    }
+
+    document.getElementById('contentModal').addEventListener('click', e => {
+      if (e.target === document.getElementById('contentModal')) closeContentModal();
+    });
+
+    // Load on init
+    loadModels();
+  </script>
+</body>
+</html>
