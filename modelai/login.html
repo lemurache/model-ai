@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fractal — Sign in</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --gold: #C9A96E; --gold-light: #E8D5A3; --gold-dark: #8B6914;
+      --ink: #0A0A0A; --ink-2: #141414; --ink-3: #1E1E1E;
+      --surface: #111111; --surface-2: #181818; --surface-3: #202020;
+      --border: rgba(255,255,255,0.06); --border-gold: rgba(201,169,110,0.25);
+      --text: #F0EDE8; --text-2: #9A9288; --text-3: #4A4642;
+    }
+    html, body { height: 100%; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--ink); color: var(--text); min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; }
+
+    /* LEFT */
+    .left { position: relative; background: var(--ink-2); display: flex; flex-direction: column; justify-content: space-between; padding: 3rem; overflow: hidden; }
+    .left::before { content: ''; position: absolute; top: -250px; left: -250px; width: 700px; height: 700px; border-radius: 50%; background: radial-gradient(circle, rgba(201,169,110,0.07) 0%, transparent 65%); pointer-events: none; }
+    .left::after { content: ''; position: absolute; bottom: -200px; right: -200px; width: 600px; height: 600px; border-radius: 50%; background: radial-gradient(circle, rgba(29,158,117,0.05) 0%, transparent 65%); pointer-events: none; }
+
+    .brand { position: relative; z-index: 1; }
+    .brand-name { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 300; letter-spacing: 8px; text-transform: uppercase; color: var(--gold); }
+    .brand-sub { font-size: 11px; color: var(--text-3); letter-spacing: 2.5px; text-transform: uppercase; margin-top: 5px; }
+
+    .left-mid { position: relative; z-index: 1; }
+    .left-headline { font-family: 'Cormorant Garamond', serif; font-size: clamp(34px, 3.5vw, 52px); font-weight: 300; line-height: 1.15; margin-bottom: 1.25rem; }
+    .left-headline em { font-style: italic; color: var(--gold); }
+    .left-desc { font-size: 13.5px; color: var(--text-2); line-height: 1.75; max-width: 360px; margin-bottom: 2rem; }
+
+    .features { display: flex; flex-direction: column; gap: 12px; }
+    .feature { display: flex; align-items: flex-start; gap: 12px; }
+    .feat-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); flex-shrink: 0; margin-top: 7px; }
+    .feat-text { font-size: 13px; color: var(--text-2); line-height: 1.5; }
+    .feat-text strong { color: var(--text); font-weight: 500; }
+
+    .left-stats { position: relative; z-index: 1; display: flex; align-items: center; gap: 20px; }
+    .stat { display: flex; flex-direction: column; gap: 3px; }
+    .stat-n { font-family: 'Cormorant Garamond', serif; font-size: 24px; font-weight: 300; color: var(--gold); }
+    .stat-l { font-size: 11px; color: var(--text-3); letter-spacing: 0.5px; }
+    .stat-div { width: 0.5px; height: 36px; background: rgba(255,255,255,0.08); }
+
+    .fractal-svg { position: absolute; top: 50%; right: -80px; transform: translateY(-50%); opacity: 0.035; pointer-events: none; }
+
+    /* RIGHT */
+    .right { background: var(--surface); display: flex; align-items: center; justify-content: center; padding: 2rem; border-left: 0.5px solid var(--border); }
+    .auth-card { width: 100%; max-width: 400px; }
+
+    .back-link { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-3); text-decoration: none; margin-bottom: 2rem; transition: color 0.15s; }
+    .back-link:hover { color: var(--text-2); }
+
+    .auth-head { margin-bottom: 1.75rem; }
+    .auth-title { font-family: 'Cormorant Garamond', serif; font-size: 30px; font-weight: 300; margin-bottom: 5px; }
+    .auth-sub { font-size: 13px; color: var(--text-2); }
+
+    .tabs { display: flex; background: var(--surface-2); border-radius: 10px; padding: 3px; margin-bottom: 1.75rem; border: 0.5px solid var(--border); }
+    .atab { flex: 1; padding: 9px; font-size: 13px; font-weight: 500; text-align: center; cursor: pointer; border: none; background: transparent; color: var(--text-3); border-radius: 8px; transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
+    .atab.active { background: var(--surface-3); color: var(--text); border: 0.5px solid var(--border-gold); }
+
+    .err-box { background: rgba(226,75,74,0.08); border: 0.5px solid rgba(226,75,74,0.25); border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #F09595; display: none; margin-bottom: 12px; }
+    .ok-box { background: rgba(29,158,117,0.08); border: 0.5px solid rgba(29,158,117,0.25); border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #5DCAA5; display: none; margin-bottom: 12px; }
+
+    .free-pill { display: flex; align-items: center; gap: 10px; background: rgba(201,169,110,0.06); border: 0.5px solid var(--border-gold); border-radius: 10px; padding: 10px 14px; font-size: 12.5px; color: var(--gold-light); margin-bottom: 1.5rem; display: none; }
+    .free-pill svg { flex-shrink: 0; }
+
+    .aform { display: flex; flex-direction: column; gap: 14px; }
+    .fg { display: flex; flex-direction: column; gap: 6px; }
+    .fl { font-size: 11px; font-weight: 500; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-3); }
+    .fi { width: 100%; padding: 12px 14px; font-size: 14px; font-family: 'DM Sans', sans-serif; background: var(--surface-2); border: 0.5px solid var(--border); border-radius: 10px; color: var(--text); outline: none; transition: border-color 0.2s; }
+    .fi::placeholder { color: var(--text-3); }
+    .fi:focus { border-color: var(--border-gold); }
+
+    .btn-main { width: 100%; padding: 13px; font-size: 14px; font-weight: 500; font-family: 'DM Sans', sans-serif; border: none; border-radius: 10px; cursor: pointer; background: var(--gold); color: #0A0A0A; transition: all 0.2s; letter-spacing: 0.2px; margin-top: 2px; }
+    .btn-main:hover { background: var(--gold-light); }
+    .btn-main:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .or-div { display: flex; align-items: center; gap: 12px; margin: 8px 0; }
+    .or-div::before, .or-div::after { content: ''; flex: 1; height: 0.5px; background: var(--border); }
+    .or-div span { font-size: 12px; color: var(--text-3); }
+
+    .btn-google { width: 100%; padding: 12px; font-size: 13.5px; font-weight: 500; font-family: 'DM Sans', sans-serif; border: 0.5px solid var(--border); border-radius: 10px; background: var(--surface-2); color: var(--text-2); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .btn-google:hover { border-color: rgba(255,255,255,0.12); color: var(--text); }
+
+    .auth-foot { text-align: center; margin-top: 1.5rem; font-size: 12px; color: var(--text-3); }
+    .auth-foot a { color: var(--gold); text-decoration: none; }
+    .auth-foot a:hover { text-decoration: underline; }
+
+    @media (max-width: 768px) {
+      body { grid-template-columns: 1fr; }
+      .left { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="left">
+    <div class="brand">
+      <div class="brand-name">Fractal</div>
+      <div class="brand-sub">AI Influencer Studio</div>
+    </div>
+
+    <svg class="fractal-svg" width="480" height="480" viewBox="0 0 480 480" fill="none">
+      <circle cx="240" cy="240" r="220" stroke="white" stroke-width="0.6"/>
+      <circle cx="240" cy="240" r="146" stroke="white" stroke-width="0.6"/>
+      <circle cx="240" cy="240" r="73" stroke="white" stroke-width="0.6"/>
+      <circle cx="240" cy="94" r="73" stroke="white" stroke-width="0.6"/>
+      <circle cx="240" cy="386" r="73" stroke="white" stroke-width="0.6"/>
+      <circle cx="94" cy="240" r="73" stroke="white" stroke-width="0.6"/>
+      <circle cx="386" cy="240" r="73" stroke="white" stroke-width="0.6"/>
+      <circle cx="134" cy="134" r="48" stroke="white" stroke-width="0.4"/>
+      <circle cx="346" cy="134" r="48" stroke="white" stroke-width="0.4"/>
+      <circle cx="134" cy="346" r="48" stroke="white" stroke-width="0.4"/>
+      <circle cx="346" cy="346" r="48" stroke="white" stroke-width="0.4"/>
+      <circle cx="240" cy="20" r="30" stroke="white" stroke-width="0.3"/>
+      <circle cx="240" cy="460" r="30" stroke="white" stroke-width="0.3"/>
+      <circle cx="20" cy="240" r="30" stroke="white" stroke-width="0.3"/>
+      <circle cx="460" cy="240" r="30" stroke="white" stroke-width="0.3"/>
+      <line x1="240" y1="0" x2="240" y2="480" stroke="white" stroke-width="0.3"/>
+      <line x1="0" y1="240" x2="480" y2="240" stroke="white" stroke-width="0.3"/>
+      <line x1="60" y1="60" x2="420" y2="420" stroke="white" stroke-width="0.3"/>
+      <line x1="420" y1="60" x2="60" y2="420" stroke="white" stroke-width="0.3"/>
+    </svg>
+
+    <div class="left-mid">
+      <h1 class="left-headline">Create <em>AI models</em><br/>that define trends</h1>
+      <p class="left-desc">Generate photorealistic virtual influencers for fashion, swimwear, glam and lifestyle — then produce photos & videos in any scenario.</p>
+      <div class="features">
+        <div class="feature"><div class="feat-dot"></div><div class="feat-text"><strong>Generate & refine</strong> — Adjust hair, outfit, background until perfect</div></div>
+        <div class="feature"><div class="feat-dot"></div><div class="feat-text"><strong>Save your model</strong> — Reuse in unlimited photo & video scenarios</div></div>
+        <div class="feature"><div class="feat-dot"></div><div class="feat-text"><strong>10 European languages</strong> — Full platform localisation</div></div>
+      </div>
+    </div>
+
+    <div class="left-stats">
+      <div class="stat"><span class="stat-n">12K+</span><span class="stat-l">Models created</span></div>
+      <div class="stat-div"></div>
+      <div class="stat"><span class="stat-n">98M+</span><span class="stat-l">Total reach</span></div>
+      <div class="stat-div"></div>
+      <div class="stat"><span class="stat-n">4.8★</span><span class="stat-l">User rating</span></div>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="auth-card">
+
+      <a href="index.html" class="back-link">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        Back to Fractal
+      </a>
+
+      <div class="auth-head">
+        <h2 class="auth-title" id="authTitle">Welcome back</h2>
+        <p class="auth-sub" id="authSub">Sign in to your Fractal account</p>
+      </div>
+
+      <div class="tabs">
+        <button class="atab active" id="loginTab" onclick="switchTab('login')">Log in</button>
+        <button class="atab" id="signupTab" onclick="switchTab('signup')">Sign up</button>
+      </div>
+
+      <div class="err-box" id="errBox"></div>
+      <div class="ok-box" id="okBox"></div>
+      <div class="free-pill" id="freePill">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#C9A96E" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+        Sign up and get <strong style="margin:0 4px;">20 free credits</strong> instantly
+      </div>
+
+      <div id="loginForm">
+        <div class="aform">
+          <div class="fg"><label class="fl">Email</label><input class="fi" type="email" id="loginEmail" placeholder="you@example.com" /></div>
+          <div class="fg"><label class="fl">Password</label><input class="fi" type="password" id="loginPassword" placeholder="••••••••" onkeydown="if(event.key==='Enter')handleLogin()" /></div>
+          <button class="btn-main" id="loginBtn" onclick="handleLogin()">Sign in</button>
+        </div>
+        <div class="or-div"><span>or</span></div>
+        <button class="btn-google" onclick="handleGoogle()">
+          <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Continue with Google
+        </button>
+      </div>
+
+      <div id="signupForm" style="display:none;">
+        <div class="aform">
+          <div class="fg"><label class="fl">Email</label><input class="fi" type="email" id="signupEmail" placeholder="you@example.com" /></div>
+          <div class="fg"><label class="fl">Password</label><input class="fi" type="password" id="signupPassword" placeholder="minimum 6 characters" /></div>
+          <div class="fg"><label class="fl">Confirm password</label><input class="fi" type="password" id="signupConfirm" placeholder="••••••••" onkeydown="if(event.key==='Enter')handleSignup()" /></div>
+          <button class="btn-main" id="signupBtn" onclick="handleSignup()">Create free account</button>
+        </div>
+        <div class="or-div"><span>or</span></div>
+        <button class="btn-google" onclick="handleGoogle()">
+          <svg width="16" height="16" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Continue with Google
+        </button>
+      </div>
+
+      <div class="auth-foot">
+        By continuing you agree to our <a href="#">Terms</a> and <a href="#">Privacy Policy</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script>
+    const sb = supabase.createClient(
+      'https://eaogwmumxfsvodmbosnz.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVhb2d3bXVteGZzdm9kbWJvc256Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTA2OTYzNCwiZXhwIjoyMDkwNjQ1NjM0fQ.Q_cnoePFj_eRgT2JIoe0GvTExA9BaUuSF0z5ln56vh0'
+    );
+
+    function switchTab(t) {
+      const isLogin = t === 'login';
+      document.getElementById('loginTab').classList.toggle('active', isLogin);
+      document.getElementById('signupTab').classList.toggle('active', !isLogin);
+      document.getElementById('loginForm').style.display = isLogin ? '' : 'none';
+      document.getElementById('signupForm').style.display = isLogin ? 'none' : '';
+      document.getElementById('freePill').style.display = isLogin ? 'none' : 'flex';
+      document.getElementById('authTitle').textContent = isLogin ? 'Welcome back' : 'Create your account';
+      document.getElementById('authSub').textContent = isLogin ? 'Sign in to your Fractal account' : 'Start generating AI models for free';
+      hide();
+    }
+
+    function err(m) { const e=document.getElementById('errBox'); e.textContent=m; e.style.display='block'; document.getElementById('okBox').style.display='none'; }
+    function ok(m) { const e=document.getElementById('okBox'); e.textContent=m; e.style.display='block'; document.getElementById('errBox').style.display='none'; }
+    function hide() { document.getElementById('errBox').style.display='none'; document.getElementById('okBox').style.display='none'; }
+    function setLoad(id, on) {
+      const b=document.getElementById(id); b.disabled=on;
+      if(id==='loginBtn') b.textContent=on?'Signing in...':'Sign in';
+      else b.textContent=on?'Creating account...':'Create free account';
+    }
+
+    async function handleLogin() {
+      const email=document.getElementById('loginEmail').value.trim();
+      const pass=document.getElementById('loginPassword').value;
+      if(!email||!pass) return err('Please fill in all fields.');
+      setLoad('loginBtn',true);
+      const {error}=await sb.auth.signInWithPassword({email,password:pass});
+      setLoad('loginBtn',false);
+      if(error) return err(error.message);
+      ok('Signed in! Redirecting...');
+      setTimeout(()=>window.location.href='index.html',900);
+    }
+
+    async function handleSignup() {
+      const email=document.getElementById('signupEmail').value.trim();
+      const pass=document.getElementById('signupPassword').value;
+      const conf=document.getElementById('signupConfirm').value;
+      if(!email||!pass) return err('Please fill in all fields.');
+      if(pass.length<6) return err('Password must be at least 6 characters.');
+      if(pass!==conf) return err('Passwords do not match.');
+      setLoad('signupBtn',true);
+      const {error}=await sb.auth.signUp({email,password:pass});
+      setLoad('signupBtn',false);
+      if(error) return err(error.message);
+      ok('Account created! Check your email to confirm, then log in.');
+    }
+
+    async function handleGoogle() {
+      const {error}=await sb.auth.signInWithOAuth({
+        provider:'google',
+        options:{redirectTo:window.location.origin+'/index.html'}
+      });
+      if(error) err(error.message);
+    }
+
+    sb.auth.getSession().then(({data:{session}})=>{
+      if(session) window.location.href='index.html';
+    });
+  </script>
+</body>
+</html>
