@@ -14,31 +14,42 @@ export default async function handler(req, res) {
   const prompt = buildVideoPrompt(scenario, modelName);
 
   try {
-    // Kling v2.1 - correct model name on Replicate
-    const createRes = await fetch(
-      'https://api.replicate.com/v1/models/kwaivgi/kling-v2.1/predictions',
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'Prefer': 'wait=60'
-        },
-        body: JSON.stringify({
-          input: {
-            image: imageUrl,
-            prompt: prompt,
-            negative_prompt: 'blurry, bad quality, distorted, unnatural movement, watermark, text',
-            duration: parseInt(duration),
-            aspect_ratio: '9:16',
-            mode: 'standard'
-          }
-        })
-      }
-    );
+    // Retry up to 3 times if rate limited
+    let createRes, data;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      createRes = await fetch(
+        'https://api.replicate.com/v1/models/kwaivgi/kling-v2.1/predictions',
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'wait=60'
+          },
+          body: JSON.stringify({
+            input: {
+              image: imageUrl,
+              prompt: prompt,
+              negative_prompt: 'blurry, bad quality, distorted, unnatural movement, watermark, text',
+              duration: parseInt(duration),
+              aspect_ratio: '9:16',
+              mode: 'standard'
+            }
+          })
+        }
+      );
+      data = await createRes.json();
+      console.log('Kling v2.1 attempt', attempt + 1, 'status:', createRes.status);
 
-    const data = await createRes.json();
-    console.log('Kling v2.1 status:', createRes.status, JSON.stringify(data).substring(0, 300));
+      // If rate limited, wait and retry
+      if (createRes.status === 429) {
+        const retryAfter = (data.retry_after || 15) * 1000;
+        console.log('Rate limited, waiting', retryAfter, 'ms');
+        await new Promise(r => setTimeout(r, retryAfter));
+        continue;
+      }
+      break;
+    }
 
     if (!createRes.ok) {
       // Fallback to kling-v1.6 if v2.1 not available
