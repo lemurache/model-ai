@@ -40,7 +40,7 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         input: {
-          image: imageUrl,
+          start_image: imageUrl,
           prompt,
           negative_prompt: 'blurry, bad quality, distorted, watermark, text',
           duration: parseInt(duration),
