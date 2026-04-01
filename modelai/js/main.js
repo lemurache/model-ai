@@ -153,35 +153,110 @@ modalClose.addEventListener('click', () => {
 
 modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
 
-// ------------ GENERATE MODEL ------------
-document.getElementById('generateBtn')?.addEventListener('click', () => {
+// ------------ GENERATE MODEL (REAL API) ------------
+document.getElementById('generateBtn')?.addEventListener('click', async () => {
   const cost = updateCost();
-  runModal(
-    'Generating your model...',
-    'AI is building appearance, personality & content strategy',
-    () => {
-      modalTitle.textContent = 'Model generated! 🎉';
-      modalSub.textContent = 'Choose your favourite variant, adjust details, then save.';
-      modalClose.textContent = 'View results →';
-      modalClose.dataset.action = 'show_result';
+  const niche = document.getElementById('niche')?.value || 'glam';
+  const prompt = document.getElementById('prompt')?.value || '';
+  const vibe = document.getElementById('vibe')?.value || 'luxury';
+  const ethnicity = document.getElementById('ethnicity')?.value || 'auto';
+  const gender = document.getElementById('gender')?.value || 'female';
+  const age = document.getElementById('age')?.value || '18 – 24';
+
+  // Show modal with steps
+  resetModal();
+  modalTitle.textContent = 'Generating your model...';
+  modalSub.textContent = 'AI is creating your virtual influencer';
+  modal.classList.add('show');
+
+  // Animate steps while waiting
+  let stepIdx = 1;
+  const stepIv = setInterval(() => {
+    if (stepIdx < steps.length) {
+      steps[stepIdx - 1]?.classList.remove('active');
+      steps[stepIdx - 1]?.classList.add('done');
+      steps[stepIdx]?.classList.add('active');
+      stepIdx++;
     }
-  );
-  spendCredits(cost);
-  currentModel = {
-    id: Date.now(),
-    name: generateModelName(),
-    niche: document.getElementById('niche')?.value || 'glam',
-    nicheLabel: getNicheLabel(document.getElementById('niche')?.value),
-    prompt: document.getElementById('prompt')?.value || '',
-    grad: getRandomGrad(),
-    emoji: '👱‍♀️',
-    reach: formatReach(Math.floor(Math.random() * 3000 + 500) * 1000),
-    engagement: (Math.random() * 10 + 5).toFixed(1) + '%',
-    posts: 0,
-    saved: false,
-    createdAt: new Date().toISOString()
-  };
+  }, 3000);
+
+  try {
+    // Generate 4 variants in parallel
+    const promises = Array.from({ length: 4 }, (_, i) =>
+      generateImage({ prompt, niche, vibe, ethnicity, gender, age, seed: i })
+    );
+    const results = await Promise.allSettled(promises);
+
+    clearInterval(stepIv);
+    steps.forEach(s => { s.classList.remove('active'); s.classList.add('done'); });
+
+    // Show results
+    const resultGrid = document.getElementById('resultGrid');
+    if (resultGrid) {
+      results.forEach((result, i) => {
+        const card = resultGrid.children[i];
+        if (!card) return;
+        const imgDiv = card.querySelector('.result-img');
+        if (result.status === 'fulfilled' && result.value?.image) {
+          imgDiv.style.backgroundImage = `url(${result.value.image})`;
+          imgDiv.style.backgroundSize = 'cover';
+          imgDiv.style.backgroundPosition = 'center';
+          imgDiv.innerHTML = i === 0 ? '<div class="result-check">✓</div>' : '';
+          // Store image data
+          card.dataset.imageData = result.value.image;
+        } else {
+          imgDiv.innerHTML = '<span style="font-size:32px;color:rgba(255,255,255,0.3)">⚠</span>';
+        }
+      });
+    }
+
+    spendCredits(cost);
+    currentModel = {
+      id: Date.now(),
+      name: generateModelName(),
+      niche, nicheLabel: getNicheLabel(niche),
+      prompt, grad: getRandomGrad(), emoji: '👱‍♀️',
+      reach: formatReach(Math.floor(Math.random() * 3000 + 500) * 1000),
+      engagement: (Math.random() * 10 + 5).toFixed(1) + '%',
+      posts: 0, saved: false,
+      imageData: results[0]?.value?.image || null,
+      createdAt: new Date().toISOString()
+    };
+
+    modalSpinner.classList.add('hidden');
+    modalCheck.classList.remove('hidden');
+    modalTitle.textContent = 'Model generated! ✨';
+    modalSub.textContent = 'Choose your favourite variant, adjust if needed, then save.';
+    modalClose.textContent = 'View results →';
+    modalClose.dataset.action = 'show_result';
+
+  } catch (err) {
+    clearInterval(stepIv);
+    closeModal();
+    alert('Generation failed: ' + err.message + '\nPlease try again.');
+  }
 });
+
+async function generateImage({ prompt, niche, vibe, ethnicity, gender, age, seed = 0 }) {
+  let retries = 3;
+  while (retries > 0) {
+    const res = await fetch('/api/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt, niche, vibe, ethnicity, gender, age, seed })
+    });
+    const data = await res.json();
+    if (data.loading) {
+      // Model still loading — wait and retry
+      await new Promise(r => setTimeout(r, 20000));
+      retries--;
+      continue;
+    }
+    if (!res.ok) throw new Error(data.error || 'API error');
+    return data;
+  }
+  throw new Error('Model took too long to load. Please try again.');
+}
 
 function showResult() {
   const rs = document.getElementById('resultSection');
