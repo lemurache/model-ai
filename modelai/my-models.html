@@ -213,15 +213,71 @@
     </div>
   </div>
 
-  <!-- GENERATE CONTENT MODAL -->
+  <!-- VIDEO GENERATION MODAL -->
   <div class="content-modal-overlay" id="contentModal">
-    <div class="content-modal">
-      <h3 class="content-modal-title" id="contentModalTitle">Generate content</h3>
-      <p class="content-modal-sub" id="contentModalSub">Choose a scenario for your model</p>
+    <div class="content-modal" style="max-width:680px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;">
+        <div>
+          <h3 class="content-modal-title" id="contentModalTitle">Generate content</h3>
+          <p class="content-modal-sub" id="contentModalSub">Choose a scenario for your model</p>
+        </div>
+        <button onclick="closeContentModal()" style="background:none;border:none;cursor:pointer;color:var(--text-3);font-size:20px;padding:4px;">✕</button>
+      </div>
+
+      <!-- MODEL PREVIEW -->
+      <div id="modalModelPreview" style="width:100%;height:140px;border-radius:var(--radius-lg);background-size:cover;background-position:center top;margin-bottom:1.5rem;border:0.5px solid var(--border);position:relative;overflow:hidden;">
+        <div style="position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.7) 0%,transparent 60%);"></div>
+        <div style="position:absolute;bottom:12px;left:14px;">
+          <div style="font-family:var(--font-display);font-size:18px;font-weight:300;color:#fff;" id="modalModelName">Model</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.6);letter-spacing:1px;text-transform:uppercase;" id="modalModelNiche">Niche</div>
+        </div>
+      </div>
+
+      <!-- DURATION -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:1.25rem;">
+        <label style="font-size:10px;font-weight:500;letter-spacing:1.2px;text-transform:uppercase;color:var(--text-3);white-space:nowrap;">Duration</label>
+        <div style="display:flex;gap:6px;">
+          <button class="dur-btn active" data-dur="5" onclick="selectDuration(5)">5s — 8 credits</button>
+          <button class="dur-btn" data-dur="10" onclick="selectDuration(10)">10s — 15 credits</button>
+        </div>
+      </div>
+
+      <!-- SCENARIOS -->
       <div class="content-scenarios-grid" id="contentScenariosGrid"></div>
-      <button class="content-modal-close" onclick="closeContentModal()">Close</button>
+
+      <!-- GENERATING STATE -->
+      <div id="videoGenerating" style="display:none;text-align:center;padding:2rem 0;">
+        <div style="width:48px;height:48px;border:2px solid var(--border-md);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 1rem;"></div>
+        <div style="font-family:var(--font-display);font-size:18px;font-weight:300;color:var(--text);margin-bottom:6px;" id="videoGenTitle">Generating video...</div>
+        <div style="font-size:13px;color:var(--text-2);" id="videoGenSub">Kling AI is animating your model. This takes ~60-90 seconds.</div>
+        <div style="margin-top:1rem;font-size:12px;color:var(--text-3);" id="videoGenTimer">0s elapsed</div>
+      </div>
+
+      <!-- VIDEO RESULT -->
+      <div id="videoResult" style="display:none;">
+        <video id="resultVideo" controls style="width:100%;border-radius:var(--radius-lg);margin-bottom:1rem;max-height:400px;background:#000;"></video>
+        <div style="display:flex;gap:8px;">
+          <a id="downloadBtn" class="btn btn-generate" style="flex:1;justify-content:center;text-decoration:none;" download="fractal-video.mp4">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Download video
+          </a>
+          <button class="btn btn-outline" onclick="resetVideoModal()">Generate another</button>
+        </div>
+      </div>
+
+      <button class="content-modal-close" id="videoModalClose" onclick="closeContentModal()">Close</button>
     </div>
   </div>
+
+  <style>
+    .dur-btn {
+      padding:6px 14px;border-radius:999px;font-size:12px;font-weight:500;
+      border:0.5px solid var(--border);background:var(--surface-3);
+      color:var(--text-3);cursor:pointer;transition:all 0.15s;font-family:var(--font-body);
+    }
+    .dur-btn.active { background:var(--gold-bg);color:var(--gold);border-color:var(--gold-border); }
+    @keyframes spin { to { transform:rotate(360deg); } }
+  </style>
 
   <footer class="footer">
     <div class="footer-inner">
@@ -236,24 +292,151 @@
   <script src="js/i18n.js"></script>
   <script>
     const CONTENT_SCENARIOS = [
-      { id:'pool', label:'Pool day', icon:'🏊', cost:5, type:'video', grad:'grad-blue' },
-      { id:'beach', label:'Beach sunset', icon:'🌅', cost:5, type:'video', grad:'grad-amber' },
-      { id:'grwm', label:'GRWM night out', icon:'🌙', cost:5, type:'video', grad:'grad-purple' },
-      { id:'outfit', label:'Outfit check', icon:'💅', cost:3, type:'photo', grad:'grad-pink' },
-      { id:'studio', label:'Studio shoot', icon:'📸', cost:3, type:'photo', grad:'grad-coral' },
-      { id:'gym', label:'Gym workout', icon:'💪', cost:3, type:'photo', grad:'grad-teal' },
-      { id:'restaurant', label:'Luxury dinner', icon:'🍾', cost:5, type:'video', grad:'grad-green' },
-      { id:'travel', label:'Travel vlog', icon:'✈️', cost:8, type:'video', grad:'grad-amber' },
+      { id:'pool', label:'Pool day', icon:'🏊', cost:8, type:'video', grad:'grad-blue', desc:'Relaxing by luxury pool' },
+      { id:'beach', label:'Beach sunset', icon:'🌅', cost:8, type:'video', grad:'grad-amber', desc:'Walking on beach at sunset' },
+      { id:'grwm', label:'GRWM night out', icon:'🌙', cost:8, type:'video', grad:'grad-purple', desc:'Getting ready makeup routine' },
+      { id:'outfit', label:'Outfit reveal', icon:'💅', cost:8, type:'video', grad:'grad-pink', desc:'360° outfit showcase' },
+      { id:'studio', label:'Studio shoot', icon:'📸', cost:8, type:'video', grad:'grad-coral', desc:'Professional photo studio poses' },
+      { id:'gym', label:'Gym workout', icon:'💪', cost:8, type:'video', grad:'grad-teal', desc:'Athletic workout session' },
+      { id:'restaurant', label:'Luxury dinner', icon:'🍾', cost:8, type:'video', grad:'grad-green', desc:'Elegant restaurant scene' },
+      { id:'travel', label:'Travel vlog', icon:'✈️', cost:8, type:'video', grad:'grad-amber', desc:'Scenic destination moment' },
+      { id:'dance', label:'Dance / vibe', icon:'🎵', cost:8, type:'video', grad:'grad-purple', desc:'Dancing naturally to music' },
     ];
 
+    let activeModel = null;
+    let selectedDuration = 5;
+    let timerInterval = null;
+
+    function selectDuration(dur) {
+      selectedDuration = dur;
+      document.querySelectorAll('.dur-btn').forEach(b => {
+        b.classList.toggle('active', parseInt(b.dataset.dur) === dur);
+      });
+    }
+
+    function openContentModal(modelId, modelName) {
+      activeModel = models.find(m => String(m.id) === String(modelId));
+      if (!activeModel) return;
+
+      resetVideoModal();
+
+      document.getElementById('contentModalTitle').textContent = `Generate video`;
+      document.getElementById('contentModalSub').textContent = `Pick a scenario for ${modelName}`;
+      document.getElementById('modalModelName').textContent = modelName;
+      document.getElementById('modalModelNiche').textContent = activeModel.nicheLabel || activeModel.niche || '';
+
+      const preview = document.getElementById('modalModelPreview');
+      const src = activeModel.imageData || activeModel.image_url;
+      if (src) preview.style.backgroundImage = `url(${src})`;
+
+      const grid = document.getElementById('contentScenariosGrid');
+      grid.innerHTML = CONTENT_SCENARIOS.map(s => `
+        <div class="cs-card" onclick="startVideoGeneration('${s.id}')">
+          <div class="cs-img ${s.grad}">
+            <span style="font-size:24px;">${s.icon}</span>
+            <span class="cs-type">▶ ${selectedDuration}s video</span>
+          </div>
+          <div class="cs-info">
+            <div class="cs-name">${s.label}</div>
+            <div style="font-size:10px;color:var(--text-3);margin-top:1px;">${s.desc}</div>
+            <div class="cs-cost">${s.cost} credits</div>
+          </div>
+        </div>
+      `).join('');
+
+      document.getElementById('contentModal').classList.add('show');
+    }
+
+    async function startVideoGeneration(scenarioId) {
+      if (!activeModel) return;
+      const src = activeModel.imageData || activeModel.image_url;
+      if (!src) { alert('This model has no image. Please generate a new model first.'); return; }
+
+      // Show generating state
+      document.getElementById('contentScenariosGrid').style.display = 'none';
+      document.querySelector('.dur-btn')?.closest('div')?.parentElement?.style.setProperty('display','none');
+      document.getElementById('videoGenerating').style.display = 'block';
+      document.getElementById('videoModalClose').style.display = 'none';
+
+      // Timer
+      let elapsed = 0;
+      timerInterval = setInterval(() => {
+        elapsed += 1;
+        const el = document.getElementById('videoGenTimer');
+        if (el) el.textContent = `${elapsed}s elapsed — usually takes 60-120s`;
+      }, 1000);
+
+      // Update title based on scenario
+      const scenario = CONTENT_SCENARIOS.find(s => s.id === scenarioId);
+      document.getElementById('videoGenTitle').textContent = `Generating "${scenario?.label}" video...`;
+
+      try {
+        const response = await fetch('/api/generate-video', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            imageUrl: src,
+            scenario: scenarioId,
+            modelName: activeModel.name,
+            duration: selectedDuration
+          })
+        });
+
+        const data = await response.json();
+        clearInterval(timerInterval);
+
+        if (data.success && data.videoUrl) {
+          showVideoResult(data.videoUrl);
+        } else {
+          throw new Error(data.error || 'Generation failed');
+        }
+
+      } catch(err) {
+        clearInterval(timerInterval);
+        document.getElementById('videoGenerating').style.display = 'none';
+        document.getElementById('contentScenariosGrid').style.display = 'grid';
+        document.getElementById('videoModalClose').style.display = 'block';
+        alert('Video generation failed: ' + err.message + '\n\nPlease try again.');
+      }
+    }
+
+    function showVideoResult(videoUrl) {
+      document.getElementById('videoGenerating').style.display = 'none';
+      document.getElementById('videoResult').style.display = 'block';
+      document.getElementById('videoModalClose').style.display = 'block';
+
+      const video = document.getElementById('resultVideo');
+      video.src = videoUrl;
+      video.play();
+
+      const dlBtn = document.getElementById('downloadBtn');
+      dlBtn.href = videoUrl;
+    }
+
+    function resetVideoModal() {
+      clearInterval(timerInterval);
+      document.getElementById('videoGenerating').style.display = 'none';
+      document.getElementById('videoResult').style.display = 'none';
+      document.getElementById('contentScenariosGrid').style.display = 'grid';
+      document.getElementById('videoModalClose').style.display = 'block';
+      const durRow = document.querySelector('.dur-btn')?.closest('div')?.parentElement;
+      if (durRow) durRow.style.display = 'flex';
+    }
+
+    function closeContentModal() {
+      clearInterval(timerInterval);
+      document.getElementById('contentModal').classList.remove('show');
+      setTimeout(resetVideoModal, 300);
+    }
+
+    document.getElementById('contentModal').addEventListener('click', e => {
+      if (e.target === document.getElementById('contentModal')) closeContentModal();
+    });
+
     let models = [];
-    let activeModelId = null;
 
     async function loadModels() {
-      // Try from localStorage first
       const local = JSON.parse(localStorage.getItem('modelai_saved') || '[]');
-
-      // Try from Supabase if logged in
       try {
         const { data: { session } } = await sb.auth.getSession();
         if (session) {
@@ -262,14 +445,10 @@
           });
           const data = await res.json();
           if (data.success && data.models?.length) {
-            // Merge Supabase + local, deduplicate by id
             const supabaseModels = data.models.map(m => ({
               id: m.id, name: m.name, niche: m.niche,
               nicheLabel: getNicheLabel(m.niche), prompt: m.prompt,
               imageData: m.image_url, saved: true,
-              reach: formatReach(Math.floor(Math.random()*3000+500)*1000),
-              engagement: (Math.random()*10+5).toFixed(1)+'%',
-              posts: Math.floor(Math.random()*50),
               createdAt: m.created_at
             }));
             models = [...supabaseModels, ...local.filter(l => !supabaseModels.find(s => s.id === l.id))];
@@ -282,7 +461,6 @@
       } catch(e) {
         models = local;
       }
-
       renderPage();
     }
 
@@ -291,26 +469,15 @@
       return map[niche] || niche;
     }
 
-    function formatReach(num) {
-      if(num>=1000000) return (num/1000000).toFixed(1)+'M';
-      if(num>=1000) return (num/1000).toFixed(0)+'K';
-      return num.toString();
-    }
-
     function renderPage() {
       document.getElementById('loadingGrid').classList.add('hidden');
-
-      // Filter only models with real generated images
       const realModels = models.filter(m => m.imageData || m.image_url);
-
       if (realModels.length === 0) {
         document.getElementById('emptyState').classList.remove('hidden');
         return;
       }
-
       const grid = document.getElementById('modelsFullGrid');
       grid.classList.remove('hidden');
-
       grid.innerHTML = realModels.map(m => {
         const src = m.imageData || m.image_url;
         return `
@@ -325,7 +492,7 @@
             <div class="model-full-body">
               ${m.prompt ? `<div class="model-full-prompt">${m.prompt}</div>` : ''}
               <div class="model-full-actions">
-                <button class="btn btn-generate" onclick="openContentModal('${m.id}', '${m.name}')">Generate content</button>
+                <button class="btn btn-generate" onclick="openContentModal('${m.id}', '${m.name}')">Generate video</button>
                 <button class="delete-btn" onclick="deleteModel('${m.id}')">Delete</button>
               </div>
             </div>
@@ -334,51 +501,18 @@
       }).join('');
     }
 
-    function openContentModal(modelId, modelName) {
-      activeModelId = modelId;
-      document.getElementById('contentModalTitle').textContent = `Generate with ${modelName}`;
-      document.getElementById('contentModalSub').textContent = 'Choose a scenario — each generates a photo or video with your model';
-      const grid = document.getElementById('contentScenariosGrid');
-      grid.innerHTML = CONTENT_SCENARIOS.map(s => `
-        <div class="cs-card" onclick="generateContent('${s.id}')">
-          <div class="cs-img ${s.grad}">
-            <span>${s.icon}</span>
-            <span class="cs-type">${s.type === 'video' ? '▶ Video' : '📸 Photo'}</span>
-          </div>
-          <div class="cs-info">
-            <div class="cs-name">${s.label}</div>
-            <div class="cs-cost">${s.cost} credits</div>
-          </div>
-        </div>
-      `).join('');
-      document.getElementById('contentModal').classList.add('show');
-    }
-
-    function closeContentModal() {
-      document.getElementById('contentModal').classList.remove('show');
-    }
-
-    function generateContent(scenarioId) {
-      closeContentModal();
-      alert(`Generating ${scenarioId} content... This feature is coming soon with video AI integration!`);
-    }
-
     function deleteModel(id) {
       if (!confirm('Are you sure you want to delete this model?')) return;
       models = models.filter(m => String(m.id) !== String(id));
       localStorage.setItem('modelai_saved', JSON.stringify(models.filter(m => m.saved)));
       document.getElementById(`card-${id}`)?.remove();
-      if (models.length === 0) {
+      const realModels = models.filter(m => m.imageData || m.image_url);
+      if (realModels.length === 0) {
         document.getElementById('modelsFullGrid').classList.add('hidden');
         document.getElementById('emptyState').classList.remove('hidden');
       }
     }
 
-    document.getElementById('contentModal').addEventListener('click', e => {
-      if (e.target === document.getElementById('contentModal')) closeContentModal();
-    });
-
-    // Load on init
     loadModels();
   </script>
 </body>
