@@ -6,74 +6,73 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const token = process.env.REPLICATE_TOKEN;
-  if (!token) return res.status(500).json({ error: 'REPLICATE_TOKEN not set in environment variables' });
+  if (!token) return res.status(500).json({ error: 'REPLICATE_TOKEN missing' });
 
   const { prompt, niche, vibe, ethnicity, gender } = req.body || {};
   const finalPrompt = buildPrompt({ prompt, niche, vibe, ethnicity, gender });
 
   try {
-    // Single prediction - no parallel calls
-    const createRes = await fetch('https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions', {
+    const response = await fetch('https://api.replicate.com/v1/predictions', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
-        'Prefer': 'wait=60'
+        'Prefer': 'wait=55'
       },
       body: JSON.stringify({
+        version: '741d6b2b4b4e5a5c18e85d8e1f7c21f6b8a4f6d',
         input: {
           prompt: finalPrompt,
+          width: 512,
+          height: 768,
           num_outputs: 1,
-          aspect_ratio: '2:3',
-          output_format: 'jpg',
-          output_quality: 85,
           num_inference_steps: 4,
-          go_fast: true
+          guidance_scale: 0,
+          output_format: 'jpg'
         }
       })
     });
 
-    const prediction = await createRes.json();
+    const data = await response.json();
+    console.log('Replicate response:', JSON.stringify(data).substring(0, 300));
 
-    if (!createRes.ok) {
-      console.error('Replicate error:', prediction);
-      return res.status(createRes.status).json({
-        error: prediction.detail || JSON.stringify(prediction)
-      });
+    if (!response.ok) {
+      return res.status(response.status).json({ error: data.detail || JSON.stringify(data) });
     }
 
-    // Already done
-    if (prediction.status === 'succeeded' && prediction.output?.[0]) {
-      return res.status(200).json({ success: true, imageUrl: prediction.output[0], prompt: finalPrompt });
+    if (data.output?.[0]) {
+      return res.status(200).json({ success: true, imageUrl: data.output[0], prompt: finalPrompt });
     }
 
-    // Poll
-    const predId = prediction.id;
-    for (let i = 0; i < 25; i++) {
-      await new Promise(r => setTimeout(r, 2000));
-      const pollRes = await fetch(`https://api.replicate.com/v1/predictions/${predId}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const result = await pollRes.json();
-      if (result.status === 'succeeded' && result.output?.[0]) {
-        return res.status(200).json({ success: true, imageUrl: result.output[0], prompt: finalPrompt });
+    // Poll if not done yet
+    if (data.id) {
+      for (let i = 0; i < 20; i++) {
+        await new Promise(r => setTimeout(r, 2500));
+        const poll = await fetch(`https://api.replicate.com/v1/predictions/${data.id}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const result = await poll.json();
+        console.log('Poll status:', result.status, result.error || '');
+        if (result.status === 'succeeded' && result.output?.[0]) {
+          return res.status(200).json({ success: true, imageUrl: result.output[0], prompt: finalPrompt });
+        }
+        if (result.status === 'failed') {
+          return res.status(500).json({ error: result.error || 'Generation failed' });
+        }
       }
-      if (result.status === 'failed') {
-        return res.status(500).json({ error: result.error || 'Generation failed' });
-      }
     }
 
-    return res.status(504).json({ error: 'Timeout. Please try again.' });
+    return res.status(504).json({ error: 'Timeout. Try again.' });
 
   } catch (err) {
-    console.error('Handler error:', err);
+    console.error('Error:', err.message);
     return res.status(500).json({ error: err.message });
   }
 }
 
 function buildPrompt({ prompt, niche, vibe, ethnicity, gender }) {
   const quality = 'photorealistic, professional fashion photography, 8k, sharp focus, perfect lighting, magazine quality';
-  const g = gender === 'male' ? 'handsome young man' : 'beautiful young woman, attractive';
+  const g = gender === 'male' ? 'handsome young man' : 'beautiful young woman';
   const eth = { 'european':'caucasian','east-asian':'east asian','south-asian':'south asian','latin':'latina','african':'african american','middle-eastern':'middle eastern','auto':'' }[ethnicity] || '';
   const styles = {
     glam: 'wearing elegant bodycon dress, high heels, glamorous makeup, luxury penthouse',
@@ -87,7 +86,7 @@ function buildPrompt({ prompt, niche, vibe, ethnicity, gender }) {
     travel: 'travel outfit, scenic destination',
     tech: 'smart casual, modern office'
   };
-  const vibes = { luxury:'luxury elegant high-end', street:'streetwear casual urban', sport:'athletic sporty energetic', minimal:'minimalist clean', genz:'trendy youthful gen-z' };
+  const vibes = { luxury:'luxury elegant', street:'streetwear casual', sport:'athletic sporty', minimal:'minimalist clean', genz:'trendy youthful' };
   const base = prompt || `${eth} ${g}, ${styles[niche] || styles.fashion}`;
   return `${base}, ${vibes[vibe] || vibes.luxury}, ${quality}`;
 }
