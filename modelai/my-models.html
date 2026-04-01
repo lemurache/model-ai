@@ -300,25 +300,26 @@
     function renderPage() {
       document.getElementById('loadingGrid').classList.add('hidden');
 
-      if (models.length === 0) {
+      // Filter only models with real generated images
+      const realModels = models.filter(m => m.imageData || m.image_url);
+
+      if (realModels.length === 0) {
         document.getElementById('emptyState').classList.remove('hidden');
         return;
       }
 
       const grid = document.getElementById('modelsFullGrid');
       grid.classList.remove('hidden');
-      grid.innerHTML = models.map(m => {
-        const hasImg = m.imageData || m.image_url;
-        const imgStyle = hasImg ? `background-image:url(${m.imageData||m.image_url});background-size:cover;background-position:center top;` : '';
-        const gradClass = hasImg ? '' : 'grad-amber';
+
+      grid.innerHTML = realModels.map(m => {
+        const src = m.imageData || m.image_url;
         return `
           <div class="model-full-card" id="card-${m.id}">
-            <div class="model-full-img ${gradClass}" style="${imgStyle}">
-              ${!hasImg ? '<div class="no-img">👱‍♀️</div>' : ''}
+            <div class="model-full-img" style="background-image:url(${src});background-size:cover;background-position:center top;">
               <div class="model-overlay"></div>
               <div class="model-overlay-content">
                 <div class="model-overlay-name">${m.name}</div>
-                <div class="model-overlay-niche">${m.nicheLabel || m.niche}</div>
+                <div class="model-overlay-niche">${m.nicheLabel || getNicheLabel(m.niche)}</div>
               </div>
             </div>
             <div class="model-full-body">
