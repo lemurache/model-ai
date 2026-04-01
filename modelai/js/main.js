@@ -739,15 +739,65 @@ document.getElementById('generateVideoBtn')?.addEventListener('click', async () 
   }
 });
 
+// ------------ VIDEO DOWNLOAD & SAVE ------------
+let currentVideoUrl = null;
+
 function showMainVideo(videoUrl) {
+  currentVideoUrl = videoUrl;
   document.getElementById('videoGeneratingArea').style.display = 'none';
   document.getElementById('videoResultArea').style.display = 'block';
   document.getElementById('generateVideoBtn').disabled = false;
+  document.getElementById('saveVideoSuccess').style.display = 'none';
   const video = document.getElementById('mainPageVideo');
   video.src = videoUrl;
-  video.play();
-  const dl = document.getElementById('mainPageDownload');
-  dl.href = videoUrl;
+  video.play().catch(() => {});
+  // Scroll to result
+  document.getElementById('videoResultArea').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+async function downloadVideo() {
+  if (!currentVideoUrl) return;
+  try {
+    // Fetch the video and force download
+    const res = await fetch(currentVideoUrl);
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `fractal-video-${Date.now()}.mp4`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  } catch(e) {
+    // Fallback — open in new tab
+    window.open(currentVideoUrl, '_blank');
+  }
+}
+
+function saveVideoToModel() {
+  if (!currentVideoUrl) return;
+  const select = document.getElementById('savedModelSelect');
+  const modelId = select?.value;
+  const model = savedModels.find(m => String(m.id) === modelId);
+  if (!model) { alert('Please select a model first.'); return; }
+
+  // Add video to model's videos array
+  if (!model.videos) model.videos = [];
+  model.videos.unshift({
+    url: currentVideoUrl,
+    prompt: document.getElementById('videoPrompt')?.value || '',
+    createdAt: new Date().toISOString()
+  });
+  model.posts = (model.posts || 0) + 1;
+
+  // Save updated model
+  const idx = savedModels.findIndex(m => String(m.id) === modelId);
+  if (idx !== -1) savedModels[idx] = model;
+  localStorage.setItem('modelai_saved', JSON.stringify(savedModels));
+
+  document.getElementById('saveVideoSuccess').style.display = 'block';
+  setTimeout(() => document.getElementById('saveVideoSuccess').style.display = 'none', 3000);
 }
 
 // Call updateVideoTab when switching to video tab
