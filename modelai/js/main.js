@@ -480,34 +480,24 @@ function renderSavedModels() {
   const grid = document.getElementById('modelsGrid');
   if (!grid) return;
 
-  const allModels = [...savedModels, ...MODELS_DATA.slice(0, Math.max(0, 4 - savedModels.length))];
-
-  if (allModels.length === 0) {
-    grid.innerHTML = '<p style="color:var(--text-3);font-size:14px;grid-column:1/-1;padding:2rem 0;">No saved models yet. Generate your first one above!</p>';
+  if (savedModels.length === 0) {
+    grid.innerHTML = '<p style="color:var(--text-3);font-size:14px;grid-column:1/-1;padding:2rem 0;text-align:center;">No saved models yet. Generate your first one above!</p>';
     return;
   }
 
-  grid.innerHTML = allModels.slice(0, 8).map(m => {
-    const hasRealImage = m.imageData || m.image_url;
-    const imgStyle = hasRealImage
-      ? `background-image:url(${m.imageData || m.image_url});background-size:cover;background-position:center top;`
-      : '';
-    const gradClass = hasRealImage ? '' : (m.grad || 'grad-amber');
+  grid.innerHTML = savedModels.slice(0, 8).map(m => {
+    const hasImg = m.imageData || m.image_url;
+    const imgStyle = hasImg ? `background-image:url(${m.imageData || m.image_url});background-size:cover;background-position:center top;` : '';
+    const gradClass = hasImg ? '' : (m.grad || 'grad-amber');
 
     return `
-      <div class="model-card ${m.featured ? 'featured' : ''}">
+      <div class="model-card">
         <div class="model-img ${gradClass}" style="${imgStyle}">
-          ${!hasRealImage ? `<div class="model-avatar-wrap">${m.emoji || '👱‍♀️'}</div>` : ''}
-          ${m.badge ? `<div class="badge badge-${m.badge}">${m.badge}</div>` : ''}
-          ${m.saved ? '<div class="badge badge-new">saved</div>' : ''}
+          ${!hasImg ? `<div class="model-avatar-wrap">${m.emoji || '👱‍♀️'}</div>` : ''}
         </div>
         <div class="model-info">
           <div class="model-name">${m.name}</div>
-          <div class="model-niche">${m.nicheLabel || m.niche}</div>
-          <div class="model-stats">
-            <div class="mstat"><strong>${m.reach || '—'}</strong><span>reach</span></div>
-            <div class="mstat"><strong>${m.engagement || '—'}</strong><span>engage</span></div>
-          </div>
+          <div class="model-niche">${m.nicheLabel || getNicheLabel(m.niche)}</div>
           <div class="model-actions">
             <button class="action-btn" onclick="generateWithModel('${m.id}')">Generate content</button>
             <button class="action-btn primary" onclick="editModel('${m.id}')">Edit</button>
