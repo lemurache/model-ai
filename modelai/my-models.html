@@ -305,18 +305,6 @@
         return;
       }
 
-      // Stats
-      const statsBar = document.getElementById('statsBar');
-      statsBar.style.display = 'flex';
-      document.getElementById('totalModels').textContent = models.length;
-      document.getElementById('totalReach').textContent = formatReach(models.reduce((acc, m) => {
-        const r = parseFloat((m.reach || '0').replace(/[KM]/g, d => d==='K'?'000':'000000')) || 0;
-        return acc + r;
-      }, 0));
-      document.getElementById('avgEngagement').textContent = (models.reduce((a,m) => a + parseFloat(m.engagement||0), 0) / models.length).toFixed(1) + '%';
-      document.getElementById('totalContent').textContent = models.reduce((a,m) => a + (m.posts||0), 0);
-
-      // Grid
       const grid = document.getElementById('modelsFullGrid');
       grid.classList.remove('hidden');
       grid.innerHTML = models.map(m => {
@@ -334,11 +322,6 @@
               </div>
             </div>
             <div class="model-full-body">
-              <div class="model-full-stats">
-                <div class="mfs"><strong>${m.reach||'—'}</strong><span>Reach</span></div>
-                <div class="mfs"><strong>${m.engagement||'—'}</strong><span>Engagement</span></div>
-                <div class="mfs"><strong>${m.posts||0}</strong><span>Posts</span></div>
-              </div>
               ${m.prompt ? `<div class="model-full-prompt">${m.prompt}</div>` : ''}
               <div class="model-full-actions">
                 <button class="btn btn-generate" onclick="openContentModal('${m.id}', '${m.name}')">Generate content</button>
