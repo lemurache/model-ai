@@ -350,6 +350,13 @@ input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 16p
 .footer-links a:hover { color: var(--gold); }
 
 .hidden { display: none !important; }
+  padding:5px 12px;border-radius:999px;font-size:12px;font-weight:500;
+  border:0.5px solid var(--border);background:var(--surface-2);
+  color:var(--text-2);cursor:pointer;transition:all 0.15s;font-family:var(--font-body);
+}
+.scenario-pill:hover { border-color:var(--border-gold);color:var(--gold);background:var(--gold-bg); }
+.scenario-pill.active { background:var(--gold-bg);color:var(--gold);border-color:var(--gold-border); }
+@keyframes spin { to { transform:rotate(360deg); } }
 
 /* RESPONSIVE */
 @media (max-width: 768px) {
