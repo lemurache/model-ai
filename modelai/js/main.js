@@ -478,22 +478,23 @@ function generateContent(scenarioId) {
 // ------------ SAVED MODELS GRID ------------
 function renderSavedModels() {
   const grid = document.getElementById('modelsGrid');
+  const section = document.getElementById('savedModelsSection');
   if (!grid) return;
 
-  if (savedModels.length === 0) {
-    grid.innerHTML = '<p style="color:var(--text-3);font-size:14px;grid-column:1/-1;padding:2rem 0;text-align:center;">No saved models yet. Generate your first one above!</p>';
+  const realModels = savedModels.filter(m => m.imageData || m.image_url);
+
+  if (realModels.length === 0) {
+    if (section) section.style.display = 'none';
     return;
   }
 
-  grid.innerHTML = savedModels.slice(0, 8).map(m => {
-    const hasImg = m.imageData || m.image_url;
-    const imgStyle = hasImg ? `background-image:url(${m.imageData || m.image_url});background-size:cover;background-position:center top;` : '';
-    const gradClass = hasImg ? '' : (m.grad || 'grad-amber');
+  if (section) section.style.display = 'block';
 
+  grid.innerHTML = realModels.slice(0, 8).map(m => {
+    const src = m.imageData || m.image_url;
     return `
       <div class="model-card">
-        <div class="model-img ${gradClass}" style="${imgStyle}">
-          ${!hasImg ? `<div class="model-avatar-wrap">${m.emoji || '👱‍♀️'}</div>` : ''}
+        <div class="model-img" style="background-image:url(${src});background-size:cover;background-position:center top;">
         </div>
         <div class="model-info">
           <div class="model-name">${m.name}</div>
