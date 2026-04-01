@@ -8,9 +8,9 @@ export default async function handler(req, res) {
   const token = process.env.REPLICATE_TOKEN;
   if (!token) return res.status(500).json({ error: 'REPLICATE_TOKEN missing' });
 
-  const { imageUrl, scenario, modelName, duration = 5, predictionId } = req.body || {};
+  const { imageUrl, scenario, modelName, duration = 5, predictionId, customPrompt } = req.body || {};
 
-  // POLL MODE - check existing prediction
+  // POLL MODE
   if (predictionId) {
     const poll = await fetch(`https://api.replicate.com/v1/predictions/${predictionId}`, {
       headers: { 'Authorization': `Bearer ${token}` }
@@ -26,9 +26,10 @@ export default async function handler(req, res) {
     return res.status(200).json({ status: result.status, predictionId });
   }
 
-  // CREATE MODE - start new prediction
   if (!imageUrl) return res.status(400).json({ error: 'imageUrl is required' });
-  const prompt = buildVideoPrompt(scenario, modelName);
+
+  // Use custom prompt if provided, otherwise build from scenario
+  const prompt = customPrompt || buildVideoPrompt(scenario, modelName);
 
   const createRes = await fetch(
     'https://api.replicate.com/v1/models/kwaivgi/kling-v2.1/predictions',
