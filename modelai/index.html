@@ -174,56 +174,80 @@
       <div class="tab-panel" id="tab-video">
         <div class="saved-model-notice" id="savedModelNotice">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          <span data-i18n="video.noModel">You don't have a saved model yet. <a href="#tab-model">Create one first →</a></span>
+          <span>You don't have a saved model yet. <a href="#" onclick="document.querySelector('[data-tab=model]').click();return false;">Create one first →</a></span>
         </div>
+
+        <!-- Model selector with preview -->
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label>Select your model</label>
+          <select id="savedModelSelect" style="margin-bottom:8px;">
+            <option value="">— Select a saved model —</option>
+          </select>
+          <div id="videoModelPreview" style="width:100%;height:120px;border-radius:var(--radius-lg);background:var(--surface-3);background-size:cover;background-position:center top;border:0.5px solid var(--border);display:none;"></div>
+        </div>
+
         <div class="form-grid">
           <div class="form-group">
-            <label data-i18n="video.model">Your model</label>
-            <select id="savedModelSelect">
-              <option data-i18n="video.selectModel">— Select a model —</option>
+            <label>Duration</label>
+            <select id="videoDuration">
+              <option value="5">5 seconds — 8 credits</option>
+              <option value="10">10 seconds — 15 credits</option>
             </select>
           </div>
           <div class="form-group">
-            <label data-i18n="video.format">Video format</label>
-            <select>
-              <option>Reel 15s — 2 credits</option>
-              <option>Reel 30s — 5 credits</option>
-              <option>Reel 60s — 8 credits</option>
-              <option>Story 9s — 1 credit</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label data-i18n="video.scenario">Scenario</label>
-            <select id="videoScenario">
-              <option>Pool day / piscină</option>
-              <option>Beach sunset walk</option>
-              <option>GRWM — night out</option>
-              <option>Outfit check bodycon</option>
-              <option>Morning routine</option>
-              <option>Workout / fitness</option>
-              <option>Luxury restaurant</option>
-              <option>Travel vlog — city</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label data-i18n="video.music">Music</label>
-            <select>
-              <option>Auto (trending)</option>
-              <option>Upbeat pop</option>
-              <option>Chill lo-fi</option>
-              <option>No music</option>
+            <label>Aspect ratio</label>
+            <select id="videoAspect">
+              <option value="9:16">9:16 — Reels / TikTok</option>
+              <option value="16:9">16:9 — YouTube</option>
+              <option value="1:1">1:1 — Instagram</option>
             </select>
           </div>
         </div>
-        <div class="form-group full">
-          <label data-i18n="video.script">Script / narrative (optional)</label>
-          <textarea rows="3" placeholder="e.g. Model wakes up at 6am, does her morning routine, shows outfit of the day and heads out into the city..."></textarea>
+
+        <div class="form-group full" style="margin-bottom:1rem;">
+          <label>Video prompt — describe exactly what you want the model to do</label>
+          <textarea id="videoPrompt" rows="4" placeholder="e.g. The model is walking slowly along a luxury beach at golden hour, hair blowing in the breeze, she looks at the camera and smiles naturally. Cinematic slow motion, warm light."></textarea>
         </div>
+
+        <div style="background:var(--surface-3);border-radius:var(--radius);padding:10px 14px;margin-bottom:1rem;border:0.5px solid var(--border);">
+          <div style="font-size:10px;font-weight:500;letter-spacing:1px;text-transform:uppercase;color:var(--text-3);margin-bottom:8px;">Quick scenarios</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;" id="quickScenarios">
+            <button class="scenario-pill" onclick="setVideoPrompt('pool')">🏊 Pool day</button>
+            <button class="scenario-pill" onclick="setVideoPrompt('beach')">🌅 Beach sunset</button>
+            <button class="scenario-pill" onclick="setVideoPrompt('grwm')">🌙 GRWM night out</button>
+            <button class="scenario-pill" onclick="setVideoPrompt('outfit')">💅 Outfit reveal</button>
+            <button class="scenario-pill" onclick="setVideoPrompt('dance')">🎵 Dancing</button>
+            <button class="scenario-pill" onclick="setVideoPrompt('restaurant')">🍾 Luxury dinner</button>
+            <button class="scenario-pill" onclick="setVideoPrompt('travel')">✈️ Travel vlog</button>
+            <button class="scenario-pill" onclick="setVideoPrompt('gym')">💪 Gym workout</button>
+          </div>
+        </div>
+
+        <!-- Video result area -->
+        <div id="videoResultArea" style="display:none;margin-bottom:1rem;">
+          <video id="mainPageVideo" controls style="width:100%;border-radius:var(--radius-lg);max-height:400px;background:#000;"></video>
+          <div style="display:flex;gap:8px;margin-top:8px;">
+            <a id="mainPageDownload" class="btn btn-generate" style="flex:1;justify-content:center;text-decoration:none;" download="fractal-video.mp4">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              Download video
+            </a>
+            <button class="btn btn-outline" onclick="document.getElementById('videoResultArea').style.display='none'">Generate another</button>
+          </div>
+        </div>
+
+        <!-- Generating state -->
+        <div id="videoGeneratingArea" style="display:none;text-align:center;padding:1.5rem;background:var(--surface-3);border-radius:var(--radius-lg);margin-bottom:1rem;border:0.5px solid var(--border);">
+          <div style="width:36px;height:36px;border:2px solid var(--border-md);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite;margin:0 auto 1rem;"></div>
+          <div style="font-size:14px;font-weight:500;color:var(--text);margin-bottom:4px;" id="videoGenStatusText">Generating video...</div>
+          <div style="font-size:12px;color:var(--text-2);" id="videoGenStatusSub">Kling AI is animating your model (~60-120 seconds)</div>
+          <div style="font-size:11px;color:var(--text-3);margin-top:6px;" id="videoGenElapsed">0s elapsed</div>
+        </div>
+
         <div class="gen-footer">
-          <div class="cost-info"><span class="cost-label">Cost:</span><span class="cost-value">5 credits</span></div>
+          <div class="cost-info"><span class="cost-label">Cost:</span><span class="cost-value" id="videoCostDisplay">8 credits</span></div>
           <button class="btn btn-generate" id="generateVideoBtn">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            <span data-i18n="video.generate">Generate video</span>
+            Generate video
           </button>
         </div>
       </div>
