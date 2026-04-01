@@ -181,32 +181,23 @@ document.getElementById('generateBtn')?.addEventListener('click', async () => {
   }, 3000);
 
   try {
-    // Generate 4 variants in parallel
-    const promises = Array.from({ length: 4 }, (_, i) =>
-      generateImage({ prompt, niche, vibe, ethnicity, gender, age, seed: i })
-    );
-    const results = await Promise.allSettled(promises);
-
+    // Generate 1 image first, then optionally more
+    const result = await generateImage({ prompt, niche, vibe, ethnicity, gender, age });
     clearInterval(stepIv);
     steps.forEach(s => { s.classList.remove('active'); s.classList.add('done'); });
 
-    // Show results
+    const src = result?.imageUrl || result?.image;
     const resultGrid = document.getElementById('resultGrid');
-    if (resultGrid) {
-      results.forEach((result, i) => {
-        const card = resultGrid.children[i];
-        if (!card) return;
+
+    if (src && resultGrid) {
+      // Fill all 4 cards with same image (user can regenerate for variants)
+      Array.from(resultGrid.children).forEach((card, i) => {
         const imgDiv = card.querySelector('.result-img');
-        if (result.status === 'fulfilled' && result.value?.image) {
-          imgDiv.style.backgroundImage = `url(${result.value.image})`;
-          imgDiv.style.backgroundSize = 'cover';
-          imgDiv.style.backgroundPosition = 'center';
-          imgDiv.innerHTML = i === 0 ? '<div class="result-check">✓</div>' : '';
-          // Store image data
-          card.dataset.imageData = result.value.image;
-        } else {
-          imgDiv.innerHTML = '<span style="font-size:32px;color:rgba(255,255,255,0.3)">⚠</span>';
-        }
+        imgDiv.style.backgroundImage = `url(${src})`;
+        imgDiv.style.backgroundSize = 'cover';
+        imgDiv.style.backgroundPosition = 'center top';
+        imgDiv.innerHTML = i === 0 ? '<div class="result-check">✓</div>' : '';
+        card.dataset.imageData = src;
       });
     }
 
@@ -219,15 +210,15 @@ document.getElementById('generateBtn')?.addEventListener('click', async () => {
       reach: formatReach(Math.floor(Math.random() * 3000 + 500) * 1000),
       engagement: (Math.random() * 10 + 5).toFixed(1) + '%',
       posts: 0, saved: false,
-      imageData: results[0]?.value?.image || null,
+      imageData: src || null,
       createdAt: new Date().toISOString()
     };
 
     modalSpinner.classList.add('hidden');
     modalCheck.classList.remove('hidden');
     modalTitle.textContent = 'Model generated! ✨';
-    modalSub.textContent = 'Choose your favourite variant, adjust if needed, then save.';
-    modalClose.textContent = 'View results →';
+    modalSub.textContent = 'Looking good! Adjust details or save your model.';
+    modalClose.textContent = 'View result →';
     modalClose.dataset.action = 'show_result';
 
   } catch (err) {
