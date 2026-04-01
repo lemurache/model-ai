@@ -12,9 +12,8 @@ export default async function handler(req, res) {
   const finalPrompt = buildPrompt({ prompt, niche, vibe, ethnicity, gender });
 
   try {
-    // Use the official model endpoint (no version hash needed)
     const response = await fetch(
-      'https://api.replicate.com/v1/models/black-forest-labs/flux-schnell/predictions',
+      'https://api.replicate.com/v1/models/black-forest-labs/flux-dev/predictions',
       {
         method: 'POST',
         headers: {
@@ -28,8 +27,9 @@ export default async function handler(req, res) {
             num_outputs: 1,
             aspect_ratio: '2:3',
             output_format: 'jpg',
-            output_quality: 85,
-            num_inference_steps: 4,
+            output_quality: 90,
+            num_inference_steps: 28,
+            guidance: 3.5,
             go_fast: true
           }
         })
@@ -37,20 +37,18 @@ export default async function handler(req, res) {
     );
 
     const data = await response.json();
-    console.log('Status:', response.status, 'Output:', data.output, 'Error:', data.detail || data.error || '');
+    console.log('Replicate status:', response.status, 'error:', data.detail || data.error || 'none');
 
     if (!response.ok) {
       return res.status(response.status).json({ error: data.detail || data.error || JSON.stringify(data) });
     }
 
-    // Direct result
     if (data.output?.[0]) {
       return res.status(200).json({ success: true, imageUrl: data.output[0], prompt: finalPrompt });
     }
 
-    // Poll if still processing
     if (data.id) {
-      for (let i = 0; i < 25; i++) {
+      for (let i = 0; i < 30; i++) {
         await new Promise(r => setTimeout(r, 2000));
         const poll = await fetch(`https://api.replicate.com/v1/predictions/${data.id}`, {
           headers: { 'Authorization': `Bearer ${token}` }
@@ -75,32 +73,55 @@ export default async function handler(req, res) {
 }
 
 function buildPrompt({ prompt, niche, vibe, ethnicity, gender }) {
-  const quality = 'photorealistic, professional fashion photography, 8k, sharp focus, perfect lighting, magazine quality';
-  const g = gender === 'male' ? 'handsome young man' : 'beautiful young woman';
+  const quality = [
+    'RAW photo', 'photorealistic', 'hyperrealistic', 'DSLR', '8k uhd',
+    'sharp focus', 'professional fashion photography', 'skin texture detail',
+    'natural beauty', 'magazine cover quality', 'cinematic lighting',
+    'no watermark', 'no text'
+  ].join(', ');
+
+  const negative = 'cartoon, anime, illustration, painting, drawing, unrealistic, blurry, bad anatomy, ugly, deformed, watermark';
+
+  const g = gender === 'male'
+    ? 'handsome athletic young man, masculine features, well-groomed'
+    : 'beautiful young woman, feminine features, fit body, attractive face, natural skin';
+
   const eth = {
-    'european':'caucasian', 'east-asian':'east asian',
-    'south-asian':'south asian', 'latin':'latina',
-    'african':'african american', 'middle-eastern':'middle eastern', 'auto':''
+    'european': 'caucasian european, light skin',
+    'east-asian': 'east asian, korean or japanese features',
+    'south-asian': 'south asian, indian features',
+    'latin': 'latina, hispanic features, olive skin',
+    'african': 'african american, dark skin, beautiful features',
+    'middle-eastern': 'middle eastern, olive skin, exotic features',
+    'auto': 'diverse mixed ethnicity'
   }[ethnicity] || '';
+
   const styles = {
-    glam: 'wearing elegant bodycon dress, high heels, glamorous makeup, luxury penthouse interior',
-    swimwear: 'wearing bikini, luxury pool resort, golden sunlight, tropical',
-    beach: 'casual summer outfit, beautiful beach, ocean sunset',
-    summer: 'floral summer dress, outdoor garden, warm light',
-    fashion: 'trendy outfit, urban street, editorial style',
-    fitness: 'athletic sportswear, gym, fit toned body',
-    beauty: 'portrait, flawless skin, perfect makeup, studio lighting',
-    food: 'stylish outfit, elegant restaurant, lifestyle',
-    travel: 'travel outfit, scenic destination background',
-    tech: 'smart casual outfit, modern office'
+    glam: 'wearing an elegant tight bodycon dress or luxurious catsuit, stiletto heels, full glam makeup, long flowing hair, standing in a modern luxury penthouse apartment, warm golden light, sophisticated pose',
+    swimwear: 'wearing a stylish colorful bikini or one-piece swimsuit, at an infinity pool or tropical beach resort, golden hour sunlight, crystal blue water in background, relaxed confident pose',
+    beach: 'wearing a casual summer outfit or beach cover-up, white sand beach, turquoise ocean waves, beautiful sunset sky, relaxed natural pose',
+    summer: 'wearing a floral summer dress, standing on a garden terrace with flowers and greenery, warm afternoon sunlight, fresh natural look',
+    fashion: 'wearing a high-fashion designer outfit, on a fashionable urban street, editorial photography style, confident pose',
+    fitness: 'wearing athletic leggings and matching sports bra, in a modern gym or outdoor park, toned athletic body, energetic pose',
+    beauty: 'close-up portrait, flawless glowing skin, perfect natural makeup, soft professional studio lighting, beauty campaign style',
+    food: 'wearing a chic stylish outfit, sitting at an elegant rooftop restaurant or luxury cafe, lifestyle photography',
+    travel: 'wearing a stylish travel outfit, standing in front of a breathtaking scenic destination, adventure lifestyle',
+    tech: 'wearing smart casual outfit, in a sleek modern tech office or minimalist studio, professional confident look'
   };
+
   const vibes = {
-    luxury: 'luxury, elegant, high-end',
-    street: 'streetwear, casual, urban',
-    sport: 'athletic, sporty, energetic',
-    minimal: 'minimalist, clean',
-    genz: 'trendy, youthful, gen-z'
+    luxury: 'luxury, high-end, elegant, sophisticated, refined, upscale',
+    street: 'streetwear, casual, urban, cool, trendy',
+    sport: 'athletic, sporty, energetic, dynamic, active lifestyle',
+    minimal: 'minimalist, clean, modern, simple elegance',
+    genz: 'trendy, youthful, vibrant, bold, gen-z aesthetic'
   };
-  const base = prompt || `${eth} ${g}, ${styles[niche] || styles.fashion}`;
-  return `${base}, ${vibes[vibe] || vibes.luxury}, ${quality}`;
+
+  const base = prompt
+    ? prompt
+    : `${eth} ${g}, ${styles[niche] || styles.fashion}`;
+
+  const vibeStr = vibes[vibe] || vibes.luxury;
+
+  return `${base}, ${vibeStr}, ${quality}`;
 }
