@@ -181,27 +181,52 @@ document.getElementById('generateBtn')?.addEventListener('click', async () => {
   }, 3000);
 
   try {
-    // Generate 1 image first, then optionally more
-    const result = await generateImage({ prompt, niche, vibe, ethnicity, gender, age });
     clearInterval(stepIv);
-    steps.forEach(s => { s.classList.remove('active'); s.classList.add('done'); });
-
-    const src = result?.imageUrl || result?.image;
     const resultGrid = document.getElementById('resultGrid');
+    const seeds = [
+      Math.floor(Math.random() * 999999),
+      Math.floor(Math.random() * 999999),
+      Math.floor(Math.random() * 999999),
+      Math.floor(Math.random() * 999999)
+    ];
+    let firstSrc = null;
 
-    if (src && resultGrid) {
-      // Fill all 4 cards with same image (user can regenerate for variants)
-      Array.from(resultGrid.children).forEach((card, i) => {
-        const imgDiv = card.querySelector('.result-img');
-        imgDiv.style.backgroundImage = `url(${src})`;
-        imgDiv.style.backgroundSize = 'cover';
-        imgDiv.style.backgroundPosition = 'center top';
-        imgDiv.innerHTML = i === 0 ? '<div class="result-check">✓</div>' : '';
-        card.dataset.imageData = src;
+    // Generate 4 variants sequentially with different seeds
+    for (let i = 0; i < 4; i++) {
+      // Update modal progress
+      steps.forEach((s, si) => {
+        s.classList.remove('active', 'done');
+        if (si < i) s.classList.add('done');
+        else if (si === i) s.classList.add('active');
       });
+      if (i < steps.length && steps[i]) {
+        steps[i].querySelector('span').textContent = `Generating variant ${i + 1} of 4...`;
+      }
+      modalSub.textContent = `Creating variant ${i + 1} of 4...`;
+
+      try {
+        const result = await generateImage({ prompt, niche, vibe, ethnicity, gender, age, seed: seeds[i] });
+        const src = result?.imageUrl || result?.image;
+        if (src && resultGrid) {
+          const card = resultGrid.children[i];
+          if (card) {
+            const imgDiv = card.querySelector('.result-img');
+            imgDiv.style.backgroundImage = `url(${src})`;
+            imgDiv.style.backgroundSize = 'cover';
+            imgDiv.style.backgroundPosition = 'center top';
+            imgDiv.innerHTML = i === 0 ? '<div class="result-check">✓</div>' : '';
+            card.dataset.imageData = src;
+            if (i === 0) firstSrc = src;
+          }
+        }
+      } catch (e) {
+        console.warn('Variant', i + 1, 'failed:', e.message);
+      }
     }
 
+    steps.forEach(s => { s.classList.remove('active'); s.classList.add('done'); });
     spendCredits(cost);
+
     currentModel = {
       id: Date.now(),
       name: generateModelName(),
@@ -210,15 +235,15 @@ document.getElementById('generateBtn')?.addEventListener('click', async () => {
       reach: formatReach(Math.floor(Math.random() * 3000 + 500) * 1000),
       engagement: (Math.random() * 10 + 5).toFixed(1) + '%',
       posts: 0, saved: false,
-      imageData: src || null,
+      imageData: firstSrc || null,
       createdAt: new Date().toISOString()
     };
 
     modalSpinner.classList.add('hidden');
     modalCheck.classList.remove('hidden');
-    modalTitle.textContent = 'Model generated! ✨';
-    modalSub.textContent = 'Looking good! Adjust details or save your model.';
-    modalClose.textContent = 'View result →';
+    modalTitle.textContent = 'All 4 variants ready! ✨';
+    modalSub.textContent = 'Pick your favourite, adjust if needed, then save.';
+    modalClose.textContent = 'View results →';
     modalClose.dataset.action = 'show_result';
 
   } catch (err) {
@@ -322,23 +347,69 @@ document.getElementById('regenerateBtn')?.addEventListener('click', () => {
   spendCredits(2);
 });
 
-// ------------ SAVE MODEL ------------
-document.getElementById('saveModelBtn')?.addEventListener('click', () => {
+// ------------ SAVE MODEL (REAL SUPABASE) ------------
+document.getElementById('saveModelBtn')?.addEventListener('click', async () => {
   if (!currentModel) return;
-  currentModel.saved = true;
-  savedModels.unshift(currentModel);
-  localStorage.setItem('modelai_saved', JSON.stringify(savedModels));
 
-  // Show content generator
-  document.getElementById('adjustPanel')?.classList.add('hidden');
-  document.getElementById('contentGenerator')?.classList.remove('hidden');
+  const saveBtn = document.getElementById('saveModelBtn');
+  saveBtn.disabled = true;
+  saveBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg> Saving...';
 
-  // Show toast
-  showToast();
+  try {
+    // Get current session token
+    const { data: { session } } = await (window.sb || window.supabase?.createClient('https://eaogwmumxfsvodmbosnz.supabase.co', 'SUPABASE_ANON_KEY_PLACEHOLDER'))?.auth?.getSession() || { data: {} };
 
-  // Re-render saved models grid
-  renderSavedModels();
-  renderContentScenarios();
+    const headers = { 'Content-Type': 'application/json' };
+    if (session?.access_token) {
+      headers['Authorization'] = `Bearer ${session.access_token}`;
+    }
+
+    const res = await fetch('/api/save-model', {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        name: currentModel.name,
+        niche: currentModel.niche,
+        prompt: currentModel.prompt,
+        imageUrl: currentModel.imageData,
+        settings: { vibe: currentModel.vibe, ethnicity: currentModel.ethnicity }
+      })
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      // Show content generator
+      document.getElementById('adjustPanel')?.classList.add('hidden');
+      document.getElementById('contentGenerator')?.classList.remove('hidden');
+      currentModel.saved = true;
+      savedModels.unshift(currentModel);
+      localStorage.setItem('modelai_saved', JSON.stringify(savedModels));
+      renderSavedModels();
+      renderContentScenarios();
+      showToast();
+    } else {
+      // Fallback to localStorage if not logged in
+      currentModel.saved = true;
+      savedModels.unshift(currentModel);
+      localStorage.setItem('modelai_saved', JSON.stringify(savedModels));
+      document.getElementById('contentGenerator')?.classList.remove('hidden');
+      renderSavedModels();
+      renderContentScenarios();
+      showToast();
+    }
+  } catch (e) {
+    // Fallback
+    currentModel.saved = true;
+    savedModels.unshift(currentModel);
+    localStorage.setItem('modelai_saved', JSON.stringify(savedModels));
+    document.getElementById('contentGenerator')?.classList.remove('hidden');
+    renderSavedModels();
+    showToast();
+  }
+
+  saveBtn.disabled = false;
+  saveBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save model';
 });
 
 function showToast() {
@@ -392,34 +463,42 @@ function renderSavedModels() {
   const grid = document.getElementById('modelsGrid');
   if (!grid) return;
 
-  const allModels = [...savedModels, ...MODELS_DATA.slice(0, 4)];
+  const allModels = [...savedModels, ...MODELS_DATA.slice(0, Math.max(0, 4 - savedModels.length))];
 
   if (allModels.length === 0) {
-    grid.innerHTML = '<p style="color:var(--ink-4);font-size:14px;grid-column:1/-1;">No saved models yet. Generate your first one above!</p>';
+    grid.innerHTML = '<p style="color:var(--text-3);font-size:14px;grid-column:1/-1;padding:2rem 0;">No saved models yet. Generate your first one above!</p>';
     return;
   }
 
-  grid.innerHTML = allModels.slice(0, 8).map(m => `
-    <div class="model-card ${m.featured ? 'featured' : ''}">
-      <div class="model-img ${m.grad || 'grad-amber'}">
-        <div class="model-avatar-wrap">${m.emoji || '👱‍♀️'}</div>
-        ${m.badge ? `<div class="badge badge-${m.badge}">${m.badge}</div>` : ''}
-        ${m.saved ? '<div class="badge badge-new">saved</div>' : ''}
-      </div>
-      <div class="model-info">
-        <div class="model-name">${m.name}</div>
-        <div class="model-niche">${m.nicheLabel || m.niche}</div>
-        <div class="model-stats">
-          <div class="mstat"><strong>${m.reach}</strong><span>reach</span></div>
-          <div class="mstat"><strong>${m.engagement}</strong><span>engage</span></div>
+  grid.innerHTML = allModels.slice(0, 8).map(m => {
+    const hasRealImage = m.imageData || m.image_url;
+    const imgStyle = hasRealImage
+      ? `background-image:url(${m.imageData || m.image_url});background-size:cover;background-position:center top;`
+      : '';
+    const gradClass = hasRealImage ? '' : (m.grad || 'grad-amber');
+
+    return `
+      <div class="model-card ${m.featured ? 'featured' : ''}">
+        <div class="model-img ${gradClass}" style="${imgStyle}">
+          ${!hasRealImage ? `<div class="model-avatar-wrap">${m.emoji || '👱‍♀️'}</div>` : ''}
+          ${m.badge ? `<div class="badge badge-${m.badge}">${m.badge}</div>` : ''}
+          ${m.saved ? '<div class="badge badge-new">saved</div>' : ''}
         </div>
-        <div class="model-actions">
-          <button class="action-btn" onclick="generateWithModel('${m.id}')">Generate content</button>
-          <button class="action-btn primary" onclick="editModel('${m.id}')">Edit</button>
+        <div class="model-info">
+          <div class="model-name">${m.name}</div>
+          <div class="model-niche">${m.nicheLabel || m.niche}</div>
+          <div class="model-stats">
+            <div class="mstat"><strong>${m.reach || '—'}</strong><span>reach</span></div>
+            <div class="mstat"><strong>${m.engagement || '—'}</strong><span>engage</span></div>
+          </div>
+          <div class="model-actions">
+            <button class="action-btn" onclick="generateWithModel('${m.id}')">Generate content</button>
+            <button class="action-btn primary" onclick="editModel('${m.id}')">Edit</button>
+          </div>
         </div>
       </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 function generateWithModel(id) {
