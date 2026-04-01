@@ -229,7 +229,7 @@ document.getElementById('generateBtn')?.addEventListener('click', async () => {
 
     currentModel = {
       id: Date.now(),
-      name: generateModelName(),
+      name: document.getElementById('modelName')?.value?.trim() || generateModelName(),
       niche, nicheLabel: getNicheLabel(niche),
       prompt, grad: getRandomGrad(), emoji: '👱‍♀️',
       reach: formatReach(Math.floor(Math.random() * 3000 + 500) * 1000),
@@ -348,23 +348,58 @@ document.getElementById('regenerateBtn')?.addEventListener('click', () => {
 });
 
 // ------------ SAVE MODEL (REAL SUPABASE) ------------
-document.getElementById('saveModelBtn')?.addEventListener('click', async () => {
+document.getElementById('saveModelBtn')?.addEventListener('click', () => {
   if (!currentModel) return;
+  openSaveModal();
+});
 
-  const saveBtn = document.getElementById('saveModelBtn');
-  saveBtn.disabled = true;
-  saveBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg> Saving...';
+function openSaveModal() {
+  const modal = document.getElementById('saveModal');
+  if (!modal) return;
+
+  // Pre-fill name from generator field or auto-generated
+  const genName = document.getElementById('modelName')?.value?.trim();
+  document.getElementById('saveModelName').value = genName || currentModel.name || '';
+
+  // Show preview image
+  const preview = document.getElementById('savePreview');
+  if (preview && currentModel.imageData) {
+    preview.style.backgroundImage = `url(${currentModel.imageData})`;
+    preview.innerHTML = '';
+    preview.style.opacity = '1';
+  }
+
+  modal.classList.add('show');
+  setTimeout(() => document.getElementById('saveModelName')?.focus(), 100);
+}
+
+function closeSaveModal() {
+  document.getElementById('saveModal')?.classList.remove('show');
+}
+
+async function confirmSave() {
+  const nameInput = document.getElementById('saveModelName');
+  const name = nameInput?.value?.trim();
+  if (!name) {
+    nameInput.style.borderColor = '#F09595';
+    nameInput.placeholder = 'Please enter a name!';
+    setTimeout(() => nameInput.style.borderColor = 'var(--border-gold)', 1500);
+    return;
+  }
+
+  const btn = document.getElementById('confirmSaveBtn');
+  btn.disabled = true;
+  btn.textContent = 'Saving...';
+
+  currentModel.name = name;
+  currentModel.notes = document.getElementById('saveModelNotes')?.value?.trim() || '';
 
   try {
-    // Get current session token
-    const { data: { session } } = await (window.sb || window.supabase?.createClient('https://eaogwmumxfsvodmbosnz.supabase.co', 'SUPABASE_ANON_KEY_PLACEHOLDER'))?.auth?.getSession() || { data: {} };
-
+    const { data: { session } } = await sb.auth.getSession();
     const headers = { 'Content-Type': 'application/json' };
-    if (session?.access_token) {
-      headers['Authorization'] = `Bearer ${session.access_token}`;
-    }
+    if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
 
-    const res = await fetch('/api/save-model', {
+    await fetch('/api/save-model', {
       method: 'POST',
       headers,
       body: JSON.stringify({
@@ -372,45 +407,27 @@ document.getElementById('saveModelBtn')?.addEventListener('click', async () => {
         niche: currentModel.niche,
         prompt: currentModel.prompt,
         imageUrl: currentModel.imageData,
-        settings: { vibe: currentModel.vibe, ethnicity: currentModel.ethnicity }
+        settings: { notes: currentModel.notes }
       })
     });
+  } catch(e) { console.warn('Supabase save failed, using localStorage'); }
 
-    const data = await res.json();
+  // Always save to localStorage as fallback
+  currentModel.saved = true;
+  savedModels = savedModels.filter(m => m.id !== currentModel.id);
+  savedModels.unshift(currentModel);
+  localStorage.setItem('modelai_saved', JSON.stringify(savedModels));
 
-    if (data.success) {
-      // Show content generator
-      document.getElementById('adjustPanel')?.classList.add('hidden');
-      document.getElementById('contentGenerator')?.classList.remove('hidden');
-      currentModel.saved = true;
-      savedModels.unshift(currentModel);
-      localStorage.setItem('modelai_saved', JSON.stringify(savedModels));
-      renderSavedModels();
-      renderContentScenarios();
-      showToast();
-    } else {
-      // Fallback to localStorage if not logged in
-      currentModel.saved = true;
-      savedModels.unshift(currentModel);
-      localStorage.setItem('modelai_saved', JSON.stringify(savedModels));
-      document.getElementById('contentGenerator')?.classList.remove('hidden');
-      renderSavedModels();
-      renderContentScenarios();
-      showToast();
-    }
-  } catch (e) {
-    // Fallback
-    currentModel.saved = true;
-    savedModels.unshift(currentModel);
-    localStorage.setItem('modelai_saved', JSON.stringify(savedModels));
-    document.getElementById('contentGenerator')?.classList.remove('hidden');
-    renderSavedModels();
-    showToast();
-  }
+  closeSaveModal();
+  document.getElementById('adjustPanel')?.classList.add('hidden');
+  document.getElementById('contentGenerator')?.classList.remove('hidden');
+  renderSavedModels();
+  renderContentScenarios();
+  showToast();
 
-  saveBtn.disabled = false;
-  saveBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save model';
-});
+  btn.disabled = false;
+  btn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> Save model';
+}
 
 function showToast() {
   const toast = document.getElementById('saveToast');
