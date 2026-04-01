@@ -4,7 +4,7 @@
 // =============================================
 
 const SUPABASE_URL = 'https://eaogwmumxfsvodmbosnz.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVhb2d3bXVteGZzdm9kbWJvc256Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NTA2OTYzNCwiZXhwIjoyMDkwNjQ1NjM0fQ.Q_cnoePFj_eRgT2JIoe0GvTExA9BaUuSF0z5ln56vh0';
+const SUPABASE_ANON_KEY = 'SUPABASE_ANON_KEY_PLACEHOLDER';
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -66,7 +66,7 @@ async function updateNav(session) {
             <div style="font-size:12px;color:#9A9288;margin-top:2px;">${credits} credits remaining</div>
           </div>
           <div style="padding:6px;">
-            <a href="index.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;font-size:13px;color:#3A3A3A;text-decoration:none;border-radius:8px;transition:background 0.1s;" onmouseover="this.style.background='#F6F5F1'" onmouseout="this.style.background=''">
+            <a href="my-models.html" style="display:flex;align-items:center;gap:8px;padding:8px 10px;font-size:13px;color:#3A3A3A;text-decoration:none;border-radius:8px;transition:background 0.1s;" onmouseover="this.style.background='#F6F5F1'" onmouseout="this.style.background=''">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
               My models
             </a>
