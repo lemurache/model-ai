@@ -181,7 +181,6 @@ document.getElementById('generateBtn')?.addEventListener('click', async () => {
   }, 3000);
 
   try {
-    clearInterval(stepIv);
     const resultGrid = document.getElementById('resultGrid');
     const seeds = [
       Math.floor(Math.random() * 999999),
@@ -189,51 +188,87 @@ document.getElementById('generateBtn')?.addEventListener('click', async () => {
       Math.floor(Math.random() * 999999),
       Math.floor(Math.random() * 999999)
     ];
-    let firstSrc = null;
 
-    // Generate 4 variants sequentially with different seeds
-    for (let i = 0; i < 4; i++) {
-      // Update modal progress
-      steps.forEach((s, si) => {
-        s.classList.remove('active', 'done');
-        if (si < i) s.classList.add('done');
-        else if (si === i) s.classList.add('active');
+    // Update modal
+    modalTitle.textContent = 'Generating 4 variants...';
+    modalSub.textContent = 'All 4 images are being created simultaneously';
+    steps[0].classList.add('done');
+    steps[1].classList.add('active');
+
+    // Show result section immediately with loading placeholders
+    showResult();
+    if (resultGrid) {
+      Array.from(resultGrid.children).forEach((card, i) => {
+        const imgDiv = card.querySelector('.result-img');
+        imgDiv.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+          <div style="width:32px;height:32px;border:2px solid rgba(201,169,110,0.3);border-top-color:var(--gold);border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+          <span style="font-size:11px;color:var(--text-3);">Generating...</span>
+        </div>`;
+        imgDiv.style.backgroundImage = '';
+        imgDiv.style.display = 'flex';
+        imgDiv.style.alignItems = 'center';
+        imgDiv.style.justifyContent = 'center';
       });
-      if (i < steps.length && steps[i]) {
-        steps[i].querySelector('span').textContent = `Generating variant ${i + 1} of 4...`;
-      }
-      modalSub.textContent = `Creating variant ${i + 1} of 4...`;
-
-      try {
-        const result = await generateImage({ prompt, niche, vibe, ethnicity, gender, age, seed: seeds[i] });
-        const src = result?.imageUrl || result?.image;
-        if (src && resultGrid) {
-          const card = resultGrid.children[i];
-          if (card) {
-            const imgDiv = card.querySelector('.result-img');
-            imgDiv.style.backgroundImage = `url(${src})`;
-            imgDiv.style.backgroundSize = 'cover';
-            imgDiv.style.backgroundPosition = 'center top';
-            imgDiv.innerHTML = i === 0 ? '<div class="result-check">✓</div>' : '';
-            card.dataset.imageData = src;
-            if (i === 0) firstSrc = src;
-          }
-        }
-      } catch (e) {
-        console.warn('Variant', i + 1, 'failed:', e.message);
-      }
     }
 
+    // Launch all 4 in parallel with small stagger to avoid rate limit
+    const generateWithDelay = (i) =>
+      new Promise(resolve => setTimeout(resolve, i * 1500)).then(() =>
+        generateImage({ prompt, niche, vibe, ethnicity, gender, age, seed: seeds[i] })
+      );
+
+    const promises = [0, 1, 2, 3].map(i => generateWithDelay(i));
+
+    // Update cards as each completes
+    let firstSrc = null;
+    promises.forEach((p, i) => {
+      p.then(result => {
+        const src = result?.imageUrl || result?.image;
+        if (!src || !resultGrid) return;
+        const card = resultGrid.children[i];
+        if (!card) return;
+        const imgDiv = card.querySelector('.result-img');
+        imgDiv.style.backgroundImage = `url(${src})`;
+        imgDiv.style.backgroundSize = 'cover';
+        imgDiv.style.backgroundPosition = 'center top';
+        imgDiv.style.display = '';
+        imgDiv.innerHTML = i === 0 ? '<div class="result-check">✓</div>' : '';
+        card.dataset.imageData = src;
+        if (i === 0) firstSrc = src;
+
+        // Update step progress
+        const done = Array.from(resultGrid.children).filter(c => c.dataset.imageData).length;
+        modalSub.textContent = `${done} of 4 variants ready...`;
+        if (done > 1 && steps[2]) { steps[1].classList.remove('active'); steps[1].classList.add('done'); steps[2].classList.add('active'); }
+        if (done > 2 && steps[3]) { steps[2].classList.remove('active'); steps[2].classList.add('done'); steps[3].classList.add('active'); }
+      }).catch(e => {
+        console.warn('Variant', i + 1, 'failed:', e.message);
+        if (resultGrid?.children[i]) {
+          const imgDiv = resultGrid.children[i].querySelector('.result-img');
+          imgDiv.innerHTML = '<span style="font-size:20px;opacity:0.3;">✕</span>';
+        }
+      });
+    });
+
+    // Wait for all to finish
+    await Promise.allSettled(promises);
+
+    clearInterval(stepIv);
     steps.forEach(s => { s.classList.remove('active'); s.classList.add('done'); });
     spendCredits(cost);
+
+    // Use first available image
+    if (!firstSrc) {
+      for (const card of resultGrid.children) {
+        if (card.dataset.imageData) { firstSrc = card.dataset.imageData; break; }
+      }
+    }
 
     currentModel = {
       id: Date.now(),
       name: document.getElementById('modelName')?.value?.trim() || generateModelName(),
       niche, nicheLabel: getNicheLabel(niche),
       prompt, grad: getRandomGrad(), emoji: '👱‍♀️',
-      reach: formatReach(Math.floor(Math.random() * 3000 + 500) * 1000),
-      engagement: (Math.random() * 10 + 5).toFixed(1) + '%',
       posts: 0, saved: false,
       imageData: firstSrc || null,
       createdAt: new Date().toISOString()
