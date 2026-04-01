@@ -581,7 +581,179 @@ function formatReach(num) {
   return num.toString();
 }
 
-// ------------ STYLE TRANSFER ------------
+// ------------ VIDEO TAB ------------
+const VIDEO_PROMPTS = {
+  pool: 'The model is relaxing by a luxury infinity pool wearing a stylish bikini. She slowly turns to look at the camera with a natural confident smile. Sun rays are reflecting on the crystal blue water. Cinematic golden hour lighting, smooth slow motion movement.',
+  beach: 'The model is walking gracefully along a pristine white sand beach at sunset. Her hair flows naturally in the warm breeze, ocean waves crash gently behind her. She glances at the camera with a relaxed natural smile. Cinematic warm golden light, slow motion.',
+  grwm: 'The model is getting ready for a night out in a luxurious bedroom. She applies lipstick in front of a large mirror, then turns to look at the camera with a glamorous smile. Warm indoor lighting, beauty vlog aesthetic, natural fluid movement.',
+  outfit: 'The model does a slow elegant 360-degree turn in a stylish modern penthouse, showing off her outfit. She strikes a confident pose and looks directly at the camera. Fashion editorial style, smooth professional camera movement.',
+  dance: 'The model is dancing naturally and gracefully to music in a stylish apartment. Her movements are fluid and confident, she smiles playfully at the camera. Vibrant lifestyle aesthetic.',
+  restaurant: 'The model is sitting at a luxury rooftop restaurant, holding a glass of champagne. She looks around the elegant setting and then turns to smile confidently at the camera. Warm candlelight atmosphere, cinematic.',
+  travel: 'The model is standing at a breathtaking scenic viewpoint overlooking the ocean. Her hair blows gently in the wind. She takes in the view and then turns to smile naturally at the camera. Cinematic travel vlog style.',
+  gym: 'The model is working out confidently in a modern gym. She finishes a set, wipes her face with a towel, and smiles energetically at the camera. Athletic and dynamic movement, motivational energy.',
+};
+
+function setVideoPrompt(scenario) {
+  const prompt = VIDEO_PROMPTS[scenario] || '';
+  const textarea = document.getElementById('videoPrompt');
+  if (textarea) {
+    textarea.value = prompt;
+    textarea.style.borderColor = 'var(--gold-border)';
+    setTimeout(() => textarea.style.borderColor = '', 1500);
+  }
+  document.querySelectorAll('.scenario-pill').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+}
+
+// Update saved model selector and preview
+function updateVideoTab() {
+  const select = document.getElementById('savedModelSelect');
+  const notice = document.getElementById('savedModelNotice');
+  const preview = document.getElementById('videoModelPreview');
+  if (!select) return;
+
+  const realModels = savedModels.filter(m => m.imageData || m.image_url);
+
+  select.innerHTML = '<option value="">— Select a saved model —</option>' +
+    realModels.map(m => `<option value="${m.id}">${m.name} — ${m.nicheLabel || m.niche}</option>`).join('');
+
+  if (realModels.length > 0) {
+    notice?.classList.add('hidden');
+    // Auto select first
+    if (!select.value && realModels[0]) {
+      select.value = realModels[0].id;
+      const src = realModels[0].imageData || realModels[0].image_url;
+      if (preview && src) {
+        preview.style.backgroundImage = `url(${src})`;
+        preview.style.display = 'block';
+      }
+    }
+  } else {
+    notice?.classList.remove('hidden');
+  }
+
+  select.addEventListener('change', () => {
+    const model = savedModels.find(m => String(m.id) === select.value);
+    const src = model?.imageData || model?.image_url;
+    if (preview) {
+      if (src) { preview.style.backgroundImage = `url(${src})`; preview.style.display = 'block'; }
+      else preview.style.display = 'none';
+    }
+  });
+}
+
+// Video cost update
+document.getElementById('videoDuration')?.addEventListener('change', function() {
+  const costEl = document.getElementById('videoCostDisplay');
+  if (costEl) costEl.textContent = this.value === '10' ? '15 credits' : '8 credits';
+});
+
+// Generate video button
+document.getElementById('generateVideoBtn')?.addEventListener('click', async () => {
+  const select = document.getElementById('savedModelSelect');
+  const modelId = select?.value;
+  const model = savedModels.find(m => String(m.id) === modelId);
+  const src = model?.imageData || model?.image_url;
+
+  if (!src) {
+    alert('Please select a saved model with a generated image first!');
+    return;
+  }
+
+  const videoPrompt = document.getElementById('videoPrompt')?.value?.trim();
+  if (!videoPrompt) {
+    alert('Please write a video prompt or select a quick scenario!');
+    document.getElementById('videoPrompt')?.focus();
+    return;
+  }
+
+  const duration = document.getElementById('videoDuration')?.value || '5';
+
+  // Show generating state
+  document.getElementById('videoResultArea').style.display = 'none';
+  document.getElementById('videoGeneratingArea').style.display = 'block';
+  document.getElementById('generateVideoBtn').disabled = true;
+
+  let elapsed = 0;
+  const elapsedTimer = setInterval(() => {
+    elapsed++;
+    const el = document.getElementById('videoGenElapsed');
+    if (el) el.textContent = `${elapsed}s elapsed — usually takes 60-120s`;
+  }, 1000);
+
+  try {
+    // Create prediction
+    let predictionId = null;
+    for (let attempt = 0; attempt < 5; attempt++) {
+      document.getElementById('videoGenStatusText').textContent = attempt > 0 ? `Retrying... (${attempt + 1}/5)` : 'Starting generation...';
+      document.getElementById('videoGenStatusSub').textContent = attempt > 0 ? 'Rate limited, waiting before retry...' : 'Kling AI is animating your model (~60-120 seconds)';
+
+      const res = await fetch('/api/generate-video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl: src, customPrompt: videoPrompt, modelName: model.name, duration: parseInt(duration) })
+      });
+      const data = await res.json();
+
+      if (res.status === 429) {
+        const wait = (data.retryAfter || 15) + 2;
+        await new Promise(r => setTimeout(r, wait * 1000));
+        continue;
+      }
+      if (!res.ok) throw new Error(data.error || 'Failed to start');
+      if (data.videoUrl) {
+        clearInterval(elapsedTimer);
+        showMainVideo(data.videoUrl);
+        return;
+      }
+      predictionId = data.predictionId;
+      break;
+    }
+
+    if (!predictionId) throw new Error('Could not start after 5 attempts. Please wait a minute and try again.');
+
+    // Poll
+    document.getElementById('videoGenStatusText').textContent = 'Generating video...';
+    for (let i = 0; i < 60; i++) {
+      await new Promise(r => setTimeout(r, 3000));
+      const res = await fetch('/api/generate-video', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ predictionId })
+      });
+      const result = await res.json();
+      if (result.status === 'succeeded' && result.videoUrl) {
+        clearInterval(elapsedTimer);
+        showMainVideo(result.videoUrl);
+        return;
+      }
+      if (result.status === 'failed') throw new Error(result.error || 'Generation failed');
+    }
+    throw new Error('Timeout. Please try again.');
+
+  } catch(err) {
+    clearInterval(elapsedTimer);
+    document.getElementById('videoGeneratingArea').style.display = 'none';
+    document.getElementById('generateVideoBtn').disabled = false;
+    alert('Video generation failed:\n' + err.message);
+  }
+});
+
+function showMainVideo(videoUrl) {
+  document.getElementById('videoGeneratingArea').style.display = 'none';
+  document.getElementById('videoResultArea').style.display = 'block';
+  document.getElementById('generateVideoBtn').disabled = false;
+  const video = document.getElementById('mainPageVideo');
+  video.src = videoUrl;
+  video.play();
+  const dl = document.getElementById('mainPageDownload');
+  dl.href = videoUrl;
+}
+
+// Call updateVideoTab when switching to video tab
+document.querySelector('[data-tab="video"]')?.addEventListener('click', updateVideoTab);
+
+// ------------ STYLE SLIDER ------------
 const fileInput = document.getElementById('fileInput');
 const uploadZone = document.getElementById('uploadZone');
 if (fileInput && uploadZone) {
