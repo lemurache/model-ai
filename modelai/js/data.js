@@ -1,7 +1,7 @@
 // =============================================
 // ModelAI — Shared Data
 // =============================================
-
+ 
 const MODELS_DATA = [
   {
     id: 1, name: 'Zara Volt', niche: 'fashion', nicheLabel: 'Fashion & stil',
@@ -159,7 +159,7 @@ const MODELS_DATA = [
     description: 'Model virtual viral pe TikTok. Outfit checks, GRWM pentru ieșiri, stiluri bodycon și glam — engagement-ul cel mai ridicat din categorie.'
   }
 ];
-
+ 
 const TRENDS_DATA = [
   { rank: 1, name: 'Get ready with me — morning routine', niche: 'Fashion', format: 'Reel 60s', platform: 'all', score: 94, icon: '⭐', color: '#FAC775' },
   { rank: 2, name: 'Outfit check — bodycon & heels', niche: 'Glam', format: 'Reel 15s', platform: 'tiktok', score: 93, icon: '💅', color: '#ED93B1' },
@@ -174,7 +174,7 @@ const TRENDS_DATA = [
   { rank: 9, name: 'Skincare routine — before & after', niche: 'Beauty', format: 'Reel 30s', platform: 'tiktok', score: 65, icon: '✨', color: '#ED93B1' },
   { rank: 10, name: 'Travel vlog — hidden gem destinations', niche: 'Travel', format: 'Video 3min', platform: 'youtube', score: 49, icon: '🗺️', color: '#EF9F27' },
 ];
-
+ 
 const TREND_CATEGORIES = [
   {
     title: 'Glam & Bodycon', icon: '💅',
