@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Explore — ModelAI</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <header class="nav"><div class="nav-inner">
+    <a href="index.html" class="logo">Model<span>AI</span></a>
+    <nav class="nav-links">
+      <a href="index.html">Generate</a><a href="explore.html" class="active">Explore</a>
+      <a href="trends.html">Trends</a><a href="pricing.html">Pricing</a>
+    </nav>
+    <div class="nav-actions">
+      <div class="lang-picker" id="langPicker"><button class="lang-btn" id="langBtn"><span id="langFlag">🇬🇧</span><span id="langCode">EN</span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button><div class="lang-dropdown" id="langDropdown"></div></div>
+      <span class="credit-badge"><span id="userCredits">47</span> credits</span>
+      <a href="login.html" class="btn btn-outline">Log in</a>
+      <a href="login.html" class="btn btn-dark">Start free</a>
+    </div>
+  </div></header>
+  <section class="page-hero"><h1>Explore AI Models</h1><p>Browse the virtual influencer library. Filter, get inspired, or clone a style.</p></section>
+  <section class="container">
+    <div class="filters-bar">
+      <div class="filter-group">
+        <select class="filter-select" id="filterNiche">
+          <option value="">All niches</option><option value="glam">Glam & Bodycon</option>
+          <option value="swimwear">Swimwear & Beach</option><option value="beach">Beach Lifestyle</option>
+          <option value="summer">Summer Fashion</option><option value="fashion">Fashion</option>
+          <option value="fitness">Fitness</option><option value="beauty">Beauty</option>
+          <option value="tech">Tech</option><option value="food">Food</option><option value="travel">Travel</option>
+        </select>
+        <select class="filter-select" id="filterSort">
+          <option value="popular">Most popular</option><option value="recent">Most recent</option>
+          <option value="engagement">High engagement</option><option value="reach">Max reach</option>
+        </select>
+        <select class="filter-select" id="filterPlatform">
+          <option value="">All platforms</option><option value="instagram">Instagram</option>
+          <option value="tiktok">TikTok</option><option value="youtube">YouTube Shorts</option>
+        </select>
+      </div>
+      <div class="search-box">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="searchInput" placeholder="Search models..." />
+      </div>
+    </div>
+    <div class="pill-row" id="nichePills">
+      <button class="pill active" data-niche="">All</button>
+      <button class="pill" data-niche="glam">Glam 💅</button>
+      <button class="pill" data-niche="swimwear">Swimwear 🏖️</button>
+      <button class="pill" data-niche="beach">Beach 🌊</button>
+      <button class="pill" data-niche="summer">Summer ☀️</button>
+      <button class="pill" data-niche="fashion">Fashion</button>
+      <button class="pill" data-niche="fitness">Fitness</button>
+      <button class="pill" data-niche="beauty">Beauty</button>
+      <button class="pill" data-niche="tech">Tech</button>
+      <button class="pill" data-niche="food">Food</button>
+      <button class="pill" data-niche="travel">Travel</button>
+    </div>
+    <div class="models-grid explore-grid" id="exploreGrid"></div>
+    <div class="load-more-wrap"><button class="btn btn-outline" id="loadMoreBtn">Load more</button></div>
+  </section>
+  <div class="modal-overlay hidden" id="detailModal"><div class="detail-box" id="detailBox"></div></div>
+  <footer class="footer"><div class="footer-inner"><div class="logo">Model<span>AI</span></div><p class="footer-tagline">Virtual influencers. Real reach.</p><div class="footer-links"><a href="#">Terms</a><a href="#">Privacy</a><a href="#">Contact</a><a href="#">API</a></div></div></footer>
+  <script src="js/i18n.js"></script><script src="js/data.js"></script><script src="js/explore.js"></script>
+</body></html>

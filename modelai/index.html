@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ModelAI — Generate AI Influencers</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+</head>
+<body>
+
+  <!-- NAV -->
+  <header class="nav">
+    <div class="nav-inner">
+      <a href="index.html" class="logo">Model<span>AI</span></a>
+      <nav class="nav-links">
+        <a href="index.html" class="active" data-i18n="nav.generate">Generate</a>
+        <a href="explore.html" data-i18n="nav.explore">Explore</a>
+        <a href="trends.html" data-i18n="nav.trends">Trends</a>
+        <a href="pricing.html" data-i18n="nav.pricing">Pricing</a>
+      </nav>
+      <div class="nav-actions">
+        <div class="lang-picker" id="langPicker">
+          <button class="lang-btn" id="langBtn">
+            <span id="langFlag">🇬🇧</span>
+            <span id="langCode">EN</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="lang-dropdown" id="langDropdown"></div>
+        </div>
+        <span class="credit-badge"><span id="userCredits">0</span> <span data-i18n="nav.credits">credits</span></span>
+        <a href="login.html" class="btn btn-outline" data-i18n="nav.login">Log in</a>
+        <a href="login.html" class="btn btn-dark" data-i18n="nav.start">Start free</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-tag" data-i18n="hero.tag">Powered by generative AI</div>
+    <h1 data-i18n="hero.title">Create <em>AI Influencers</em><br/>that dominate trends</h1>
+    <p data-i18n="hero.subtitle">Generate realistic virtual models for fashion, swimwear, glam, fitness, lifestyle — and produce photos & videos in any scenario.</p>
+    <div class="hero-stats">
+      <div class="hstat"><strong>12,400+</strong><span data-i18n="hero.stat1">models generated</span></div>
+      <div class="hdivider"></div>
+      <div class="hstat"><strong>98M+</strong><span data-i18n="hero.stat2">total reach</span></div>
+      <div class="hdivider"></div>
+      <div class="hstat"><strong>4.8★</strong><span data-i18n="hero.stat3">average rating</span></div>
+    </div>
+  </section>
+
+  <!-- MAIN GENERATOR -->
+  <section class="container">
+    <div class="generator-card">
+      <div class="gen-header">
+        <h2 data-i18n="gen.title">Create your model</h2>
+        <div class="gen-tabs" id="genTabs">
+          <button class="tab active" data-tab="model" data-i18n="gen.tab.model">New Model</button>
+          <button class="tab" data-tab="video" data-i18n="gen.tab.video">Trend Video</button>
+          <button class="tab" data-tab="style" data-i18n="gen.tab.style">Style Transfer</button>
+          <button class="tab" data-tab="collab" data-i18n="gen.tab.collab">Collab Scene</button>
+        </div>
+      </div>
+
+      <!-- TAB: NEW MODEL -->
+      <div class="tab-panel active" id="tab-model">
+        <div class="form-grid">
+          <div class="form-group">
+            <label data-i18n="form.niche">Niche</label>
+            <select id="niche">
+              <option value="glam">Glam & Bodycon 💅</option>
+              <option value="swimwear">Swimwear & Beach 🏖️</option>
+              <option value="beach">Beach Lifestyle 🌊</option>
+              <option value="summer">Summer Fashion ☀️</option>
+              <option value="fashion">Fashion & Style</option>
+              <option value="fitness">Fitness & Wellness</option>
+              <option value="beauty">Beauty & Makeup</option>
+              <option value="food">Food & Lifestyle</option>
+              <option value="travel">Travel & Adventure</option>
+              <option value="tech">Tech & Gadgets</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label data-i18n="form.vibe">Vibe</label>
+            <select id="vibe">
+              <option value="luxury">Luxury editorial</option>
+              <option value="street">Street / casual</option>
+              <option value="sport">Sport / energetic</option>
+              <option value="minimal">Minimalist</option>
+              <option value="genz">Playful / Gen-Z</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label data-i18n="form.ethnicity">Ethnicity</label>
+            <select id="ethnicity">
+              <option value="auto">Diverse (auto)</option>
+              <option value="european">European</option>
+              <option value="east-asian">East Asian</option>
+              <option value="south-asian">South Asian</option>
+              <option value="latin">Latin / Latina</option>
+              <option value="african">African</option>
+              <option value="middle-eastern">Middle Eastern</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label data-i18n="form.age">Age range</label>
+            <select id="age">
+              <option>18 – 24</option>
+              <option>25 – 32</option>
+              <option>33 – 40</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label data-i18n="form.gender">Gender</label>
+            <select id="gender">
+              <option value="female">Female</option>
+              <option value="male">Male</option>
+              <option value="nonbinary">Non-binary</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label data-i18n="form.platform">Target platform</label>
+            <select id="platform">
+              <option>Instagram Reels</option>
+              <option>TikTok</option>
+              <option>YouTube Shorts</option>
+              <option>Pinterest</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group full">
+          <label data-i18n="form.prompt">Description / prompt</label>
+          <textarea id="prompt" rows="3" data-i18n-placeholder="form.promptPlaceholder" placeholder="e.g. Athletic young woman, long blonde hair, glam makeup, wearing a leopard catsuit and heels, in a modern luxury penthouse with warm lighting..."></textarea>
+        </div>
+
+        <div class="toggle-row">
+          <label class="toggle-label">
+            <input type="checkbox" id="hdToggle" checked />
+            <span class="toggle"></span>
+            <span data-i18n="form.hd">HD Resolution</span>
+          </label>
+          <label class="toggle-label">
+            <input type="checkbox" id="videoToggle" />
+            <span class="toggle"></span>
+            <span data-i18n="form.videoPreview">Generate 3s video preview</span>
+          </label>
+          <label class="toggle-label">
+            <input type="checkbox" id="packToggle" />
+            <span class="toggle"></span>
+            <span data-i18n="form.pack">Content pack (5 variants)</span>
+          </label>
+        </div>
+
+        <div class="gen-footer">
+          <div class="cost-info">
+            <span class="cost-label" data-i18n="form.cost">Estimated cost:</span>
+            <span class="cost-value" id="costDisplay">2 credits</span>
+          </div>
+          <button class="btn btn-generate" id="generateBtn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <span data-i18n="form.generate">Generate model</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB: VIDEO -->
+      <div class="tab-panel" id="tab-video">
+        <div class="saved-model-notice" id="savedModelNotice">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span data-i18n="video.noModel">You don't have a saved model yet. <a href="#tab-model">Create one first →</a></span>
+        </div>
+        <div class="form-grid">
+          <div class="form-group">
+            <label data-i18n="video.model">Your model</label>
+            <select id="savedModelSelect">
+              <option data-i18n="video.selectModel">— Select a model —</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label data-i18n="video.format">Video format</label>
+            <select>
+              <option>Reel 15s — 2 credits</option>
+              <option>Reel 30s — 5 credits</option>
+              <option>Reel 60s — 8 credits</option>
+              <option>Story 9s — 1 credit</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label data-i18n="video.scenario">Scenario</label>
+            <select id="videoScenario">
+              <option>Pool day / piscină</option>
+              <option>Beach sunset walk</option>
+              <option>GRWM — night out</option>
+              <option>Outfit check bodycon</option>
+              <option>Morning routine</option>
+              <option>Workout / fitness</option>
+              <option>Luxury restaurant</option>
+              <option>Travel vlog — city</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label data-i18n="video.music">Music</label>
+            <select>
+              <option>Auto (trending)</option>
+              <option>Upbeat pop</option>
+              <option>Chill lo-fi</option>
+              <option>No music</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group full">
+          <label data-i18n="video.script">Script / narrative (optional)</label>
+          <textarea rows="3" placeholder="e.g. Model wakes up at 6am, does her morning routine, shows outfit of the day and heads out into the city..."></textarea>
+        </div>
+        <div class="gen-footer">
+          <div class="cost-info"><span class="cost-label">Cost:</span><span class="cost-value">5 credits</span></div>
+          <button class="btn btn-generate" id="generateVideoBtn">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <span data-i18n="video.generate">Generate video</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB: STYLE -->
+      <div class="tab-panel" id="tab-style">
+        <div class="upload-zone" id="uploadZone">
+          <div class="upload-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </div>
+          <p class="upload-title" data-i18n="style.drop">Drag & drop a reference image</p>
+          <p class="upload-sub">or <label class="upload-link" for="fileInput" data-i18n="style.browse">choose file</label></p>
+          <input type="file" id="fileInput" accept="image/*" hidden />
+        </div>
+        <div class="form-grid" style="margin-top:1rem;">
+          <div class="form-group">
+            <label data-i18n="style.model">Target model</label>
+            <select><option>— Select saved model —</option></select>
+          </div>
+          <div class="form-group">
+            <label data-i18n="style.strength">Transfer intensity</label>
+            <input type="range" min="1" max="10" value="7" id="styleStrength" />
+            <span class="range-label" id="styleVal">7 / 10</span>
+          </div>
+        </div>
+        <div class="gen-footer">
+          <div class="cost-info"><span class="cost-label">Cost:</span><span class="cost-value">5 credits</span></div>
+          <button class="btn btn-generate">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <span data-i18n="style.apply">Apply style</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- TAB: COLLAB -->
+      <div class="tab-panel" id="tab-collab">
+        <p class="tab-desc" data-i18n="collab.desc">Put two models together in a shared scene — perfect for brand campaigns or collaborative content.</p>
+        <div class="form-grid">
+          <div class="form-group">
+            <label data-i18n="collab.model1">Model 1</label>
+            <select><option>Zara Volt — Fashion</option><option>Kai Storm — Fitness</option><option>Luna Blush — Beauty</option></select>
+          </div>
+          <div class="form-group">
+            <label data-i18n="collab.model2">Model 2</label>
+            <select><option>Bianca Glam — Glam</option><option>Maya Sol — Swimwear</option><option>Aria Nova — Fashion</option></select>
+          </div>
+          <div class="form-group">
+            <label data-i18n="collab.scenario">Scenario</label>
+            <select><option>Studio photo session</option><option>Day out in the city</option><option>Workout together</option><option>Unboxing collab</option><option>Pool party</option></select>
+          </div>
+          <div class="form-group">
+            <label data-i18n="collab.output">Output</label>
+            <select><option>Static image</option><option>Reel 30s</option><option>Carousel 5 images</option></select>
+          </div>
+        </div>
+        <div class="gen-footer">
+          <div class="cost-info"><span class="cost-label">Cost:</span><span class="cost-value">12 credits</span></div>
+          <button class="btn btn-generate">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <span data-i18n="collab.generate">Generate scene</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULT SECTION (hidden until generation) -->
+    <div class="result-section hidden" id="resultSection">
+      <div class="result-header">
+        <h3 data-i18n="result.title">Your generated model</h3>
+        <div class="result-actions-top">
+          <button class="btn btn-outline" id="adjustBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93A10 10 0 1 0 4.93 19.07"/></svg>
+            <span data-i18n="result.adjust">Adjust</span>
+          </button>
+          <button class="btn btn-outline" id="regenerateBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            <span data-i18n="result.regenerate">Regenerate</span>
+          </button>
+          <button class="btn btn-dark" id="saveModelBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            <span data-i18n="result.save">Save model</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- RESULT GRID: 4 variants -->
+      <div class="result-grid" id="resultGrid">
+        <div class="result-card selected" data-variant="1">
+          <div class="result-img grad-amber"><div class="result-avatar">👱‍♀️</div><div class="result-check">✓</div></div>
+          <div class="result-card-footer"><span data-i18n="result.variant">Variant</span> 1</div>
+        </div>
+        <div class="result-card" data-variant="2">
+          <div class="result-img grad-pink"><div class="result-avatar">👱‍♀️</div></div>
+          <div class="result-card-footer"><span data-i18n="result.variant">Variant</span> 2</div>
+        </div>
+        <div class="result-card" data-variant="3">
+          <div class="result-img grad-coral"><div class="result-avatar">👱‍♀️</div></div>
+          <div class="result-card-footer"><span data-i18n="result.variant">Variant</span> 3</div>
+        </div>
+        <div class="result-card" data-variant="4">
+          <div class="result-img grad-purple"><div class="result-avatar">👱‍♀️</div></div>
+          <div class="result-card-footer"><span data-i18n="result.variant">Variant</span> 4</div>
+        </div>
+      </div>
+
+      <!-- ADJUSTMENT PANEL -->
+      <div class="adjust-panel hidden" id="adjustPanel">
+        <h4 data-i18n="adjust.title">Fine-tune your model</h4>
+        <div class="adjust-grid">
+          <div class="adjust-item">
+            <label data-i18n="adjust.hair">Hair color</label>
+            <div class="color-row">
+              <div class="color-dot" style="background:#F5C842;" data-val="blonde" title="Blonde"></div>
+              <div class="color-dot" style="background:#3B1F0A;" data-val="brunette" title="Brunette"></div>
+              <div class="color-dot" style="background:#1A1A1A;" data-val="black" title="Black"></div>
+              <div class="color-dot" style="background:#C0392B;" data-val="red" title="Red"></div>
+              <div class="color-dot active" style="background:#E8C9A0;" data-val="light-brown" title="Light brown"></div>
+            </div>
+          </div>
+          <div class="adjust-item">
+            <label data-i18n="adjust.outfit">Outfit change</label>
+            <select id="outfitChange">
+              <option value="">Keep current</option>
+              <option value="catsuit">Leopard catsuit</option>
+              <option value="bikini">Bikini</option>
+              <option value="bodycon">Black bodycon dress</option>
+              <option value="swimsuit">One-piece swimsuit</option>
+              <option value="casual">Casual street look</option>
+              <option value="sporty">Sport / gym outfit</option>
+              <option value="evening">Evening gown</option>
+            </select>
+          </div>
+          <div class="adjust-item">
+            <label data-i18n="adjust.background">Background</label>
+            <select id="bgChange">
+              <option value="">Keep current</option>
+              <option value="penthouse">Luxury penthouse</option>
+              <option value="pool">Pool / resort</option>
+              <option value="beach">Beach / ocean</option>
+              <option value="studio">Photo studio</option>
+              <option value="city">City street</option>
+              <option value="restaurant">Luxury restaurant</option>
+              <option value="gym">Modern gym</option>
+            </select>
+          </div>
+          <div class="adjust-item">
+            <label data-i18n="adjust.lighting">Lighting</label>
+            <select id="lightingChange">
+              <option value="natural">Natural daylight</option>
+              <option value="golden">Golden hour</option>
+              <option value="studio">Studio soft light</option>
+              <option value="night">Night / neon</option>
+              <option value="warm">Warm indoor</option>
+            </select>
+          </div>
+        </div>
+        <div class="adjust-prompt">
+          <label data-i18n="adjust.extra">Additional details</label>
+          <textarea rows="2" placeholder="e.g. Add sunglasses, change pose to sitting, make hair longer..."></textarea>
+        </div>
+        <div class="adjust-footer">
+          <div class="cost-info"><span class="cost-label">Cost:</span><span class="cost-value">1 credit per adjustment</span></div>
+          <button class="btn btn-generate" id="applyAdjustBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            <span data-i18n="adjust.apply">Apply adjustments</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- AFTER SAVING: generate content with model -->
+      <div class="content-generator hidden" id="contentGenerator">
+        <div class="cg-header">
+          <div class="cg-saved-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+            <span data-i18n="content.saved">Model saved!</span>
+          </div>
+          <h4 data-i18n="content.title">Generate content with this model</h4>
+          <p class="cg-sub" data-i18n="content.subtitle">Now create photos & videos in any scenario. Each generation costs credits.</p>
+        </div>
+        <div class="content-scenarios" id="contentScenarios"></div>
+      </div>
+    </div>
+
+    <!-- MY MODELS -->
+    <div class="section-header" style="margin-top:3rem;">
+      <h3 class="section-title" data-i18n="mymodels.title">My saved models</h3>
+      <a href="explore.html" class="section-link" data-i18n="mymodels.all">Browse all →</a>
+    </div>
+    <div class="models-grid" id="modelsGrid"></div>
+  </section>
+
+  <!-- GENERATION MODAL -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal-box">
+      <div class="modal-spinner" id="modalSpinner"><div class="spinner-ring"></div></div>
+      <div class="modal-check hidden" id="modalCheck">
+        <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h3 class="modal-title" id="modalTitle">Generating your model</h3>
+      <p class="modal-sub" id="modalSub">AI is building appearance, personality & content strategy</p>
+      <div class="modal-steps">
+        <div class="modal-step done" id="ms1"><div class="ms-dot"></div><span>Analyzing prompt parameters</span></div>
+        <div class="modal-step active" id="ms2"><div class="ms-dot"></div><span>Generating visual identity</span></div>
+        <div class="modal-step" id="ms3"><div class="ms-dot"></div><span>Building content profile</span></div>
+        <div class="modal-step" id="ms4"><div class="ms-dot"></div><span>Optimizing for engagement</span></div>
+      </div>
+      <button class="btn btn-outline modal-close" id="modalClose">Cancel</button>
+    </div>
+  </div>
+
+  <!-- SAVE SUCCESS TOAST -->
+  <div class="toast hidden" id="saveToast">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+    <span data-i18n="toast.saved">Model saved to your profile!</span>
+  </div>
+
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="logo">Model<span>AI</span></div>
+      <p class="footer-tagline">Virtual influencers. Real reach.</p>
+      <div class="footer-links">
+        <a href="#">Terms</a><a href="#">Privacy</a><a href="#">Contact</a><a href="#">API</a>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/i18n.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

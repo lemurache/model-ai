@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trends — ModelAI</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <header class="nav"><div class="nav-inner">
+    <a href="index.html" class="logo">Model<span>AI</span></a>
+    <nav class="nav-links">
+      <a href="index.html">Generate</a><a href="explore.html">Explore</a>
+      <a href="trends.html" class="active">Trends</a><a href="pricing.html">Pricing</a>
+    </nav>
+    <div class="nav-actions">
+      <div class="lang-picker" id="langPicker"><button class="lang-btn" id="langBtn"><span id="langFlag">🇬🇧</span><span id="langCode">EN</span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button><div class="lang-dropdown" id="langDropdown"></div></div>
+      <span class="credit-badge">47 credits</span>
+      <a href="login.html" class="btn btn-outline">Log in</a><a href="login.html" class="btn btn-dark">Start free</a>
+    </div>
+  </div></header>
+  <section class="page-hero"><h1>Real-time Trends</h1><p>The most viral content formats across all platforms. Updated daily by AI.</p></section>
+  <section class="container">
+    <div class="platform-tabs" id="platformTabs">
+      <button class="ptab active" data-p="all">All</button>
+      <button class="ptab" data-p="instagram">Instagram</button>
+      <button class="ptab" data-p="tiktok">TikTok</button>
+      <button class="ptab" data-p="youtube">YouTube Shorts</button>
+    </div>
+    <div class="section-header"><h3 class="section-title">Top trends this week</h3><span class="live-badge">● Live</span></div>
+    <div class="trends-list" id="trendsList"></div>
+    <div class="section-header" style="margin-top:3rem;"><h3 class="section-title">By category</h3></div>
+    <div class="trend-cats" id="trendCats"></div>
+    <div class="section-header" style="margin-top:3rem;"><h3 class="section-title">Best posting hours heatmap</h3></div>
+    <div class="heatmap-wrap"><div class="heatmap" id="heatmap"></div></div>
+  </section>
+  <footer class="footer"><div class="footer-inner"><div class="logo">Model<span>AI</span></div><p class="footer-tagline">Virtual influencers. Real reach.</p><div class="footer-links"><a href="#">Terms</a><a href="#">Privacy</a><a href="#">Contact</a><a href="#">API</a></div></div></footer>
+  <script src="js/i18n.js"></script><script src="js/data.js"></script><script src="js/trends.js"></script>
+</body></html>

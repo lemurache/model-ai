@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pricing — ModelAI</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <header class="nav"><div class="nav-inner">
+    <a href="index.html" class="logo">Model<span>AI</span></a>
+    <nav class="nav-links">
+      <a href="index.html">Generate</a><a href="explore.html">Explore</a>
+      <a href="trends.html">Trends</a><a href="pricing.html" class="active">Pricing</a>
+    </nav>
+    <div class="nav-actions">
+      <div class="lang-picker" id="langPicker"><button class="lang-btn" id="langBtn"><span id="langFlag">🇬🇧</span><span id="langCode">EN</span><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg></button><div class="lang-dropdown" id="langDropdown"></div></div>
+      <span class="credit-badge">47 credits</span>
+      <a href="login.html" class="btn btn-outline">Log in</a><a href="login.html" class="btn btn-dark">Start free</a>
+    </div>
+  </div></header>
+  <section class="page-hero"><h1>Transparent Pricing</h1><p>Start for free. Scale as you grow.</p></section>
+  <section class="container">
+    <div class="billing-toggle">
+      <span>Monthly</span>
+      <label class="toggle-label"><input type="checkbox" id="annualToggle" /><span class="toggle"></span></label>
+      <span>Annual <em class="save-badge">-20%</em></span>
+    </div>
+    <div class="plans-grid" id="plansGrid"></div>
+    <div class="section-header" style="margin-top:3rem;"><h3 class="section-title">Credit costs per action</h3></div>
+    <div class="credits-table">
+      <table>
+        <thead><tr><th>Action</th><th>Credits</th><th>Est. time</th><th>Output</th></tr></thead>
+        <tbody>
+          <tr><td>New model (standard)</td><td>2</td><td>~15s</td><td>4 HD variants</td></tr>
+          <tr><td>Adjustment / refinement</td><td>1</td><td>~10s</td><td>4 updated variants</td></tr>
+          <tr><td>New model + pack (5 variants)</td><td>8</td><td>~45s</td><td>20 HD images</td></tr>
+          <tr><td>Photo scenario (pool, studio, etc)</td><td>3</td><td>~20s</td><td>4 images</td></tr>
+          <tr><td>Video reel 15s</td><td>5</td><td>~60s</td><td>1 MP4 video</td></tr>
+          <tr><td>Video reel 30s</td><td>8</td><td>~90s</td><td>1 MP4 video</td></tr>
+          <tr><td>Video reel 60s</td><td>15</td><td>~3min</td><td>1 MP4 video</td></tr>
+          <tr><td>Style transfer</td><td>5</td><td>~30s</td><td>4 variants</td></tr>
+          <tr><td>Collab scene</td><td>12</td><td>~2min</td><td>6 images + optional reel</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="section-header" style="margin-top:3rem;"><h3 class="section-title">FAQ</h3></div>
+    <div class="faq-list" id="faqList"></div>
+  </section>
+  <footer class="footer"><div class="footer-inner"><div class="logo">Model<span>AI</span></div><p class="footer-tagline">Virtual influencers. Real reach.</p><div class="footer-links"><a href="#">Terms</a><a href="#">Privacy</a><a href="#">Contact</a><a href="#">API</a></div></div></footer>
+  <script src="js/i18n.js"></script><script src="js/pricing.js"></script>
+</body></html>
