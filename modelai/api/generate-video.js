@@ -8,15 +8,15 @@ export default async function handler(req, res) {
   const token = process.env.REPLICATE_TOKEN;
   if (!token) return res.status(500).json({ error: 'REPLICATE_TOKEN missing' });
 
-  const { imageUrl, scenario, modelName, duration = '5' } = req.body || {};
+  const { imageUrl, scenario, modelName, duration = 5 } = req.body || {};
   if (!imageUrl) return res.status(400).json({ error: 'imageUrl is required' });
 
   const prompt = buildVideoPrompt(scenario, modelName);
 
   try {
-    // Kling AI 1.6 - best realistic human video model
+    // Kling v2.1 - correct model name on Replicate
     const createRes = await fetch(
-      'https://api.replicate.com/v1/models/kwaivgi/kling-v1-6-standard/predictions',
+      'https://api.replicate.com/v1/models/kwaivgi/kling-v2.1/predictions',
       {
         method: 'POST',
         headers: {
@@ -28,29 +28,28 @@ export default async function handler(req, res) {
           input: {
             image: imageUrl,
             prompt: prompt,
-            negative_prompt: 'blurry, bad quality, distorted face, unnatural movement, jerky motion, artifacts, watermark',
+            negative_prompt: 'blurry, bad quality, distorted, unnatural movement, watermark, text',
             duration: parseInt(duration),
-            cfg_scale: 0.5,
-            aspect_ratio: '9:16'
+            aspect_ratio: '9:16',
+            mode: 'standard'
           }
         })
       }
     );
 
     const data = await createRes.json();
-    console.log('Kling response:', createRes.status, JSON.stringify(data).substring(0, 200));
+    console.log('Kling v2.1 status:', createRes.status, JSON.stringify(data).substring(0, 300));
 
     if (!createRes.ok) {
-      return res.status(createRes.status).json({ error: data.detail || data.error || JSON.stringify(data) });
+      // Fallback to kling-v1.6 if v2.1 not available
+      return await tryKling16(token, imageUrl, prompt, duration, res);
     }
 
-    // Direct result
     if (data.output) {
       const videoUrl = Array.isArray(data.output) ? data.output[0] : data.output;
-      return res.status(200).json({ success: true, videoUrl, prompt });
+      if (videoUrl) return res.status(200).json({ success: true, videoUrl, prompt });
     }
 
-    // Poll for result
     if (data.id) {
       for (let i = 0; i < 40; i++) {
         await new Promise(r => setTimeout(r, 3000));
@@ -58,14 +57,13 @@ export default async function handler(req, res) {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const result = await poll.json();
-        console.log('Video poll', i, result.status);
-
+        console.log('Poll', i, result.status);
         if (result.status === 'succeeded') {
           const videoUrl = Array.isArray(result.output) ? result.output[0] : result.output;
           return res.status(200).json({ success: true, videoUrl, prompt });
         }
         if (result.status === 'failed') {
-          return res.status(500).json({ error: result.error || 'Video generation failed' });
+          return res.status(500).json({ error: result.error || 'Failed' });
         }
       }
     }
@@ -73,35 +71,79 @@ export default async function handler(req, res) {
     return res.status(504).json({ error: 'Timeout. Please try again.' });
 
   } catch (err) {
-    console.error('Video error:', err.message);
+    console.error('Error:', err.message);
     return res.status(500).json({ error: err.message });
   }
 }
 
+async function tryKling16(token, imageUrl, prompt, duration, res) {
+  // Fallback: Kling v1.6
+  const createRes = await fetch(
+    'https://api.replicate.com/v1/models/kwaivgi/kling-v1-6-standard/predictions',
+    {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'wait=60'
+      },
+      body: JSON.stringify({
+        input: {
+          image: imageUrl,
+          prompt: prompt,
+          negative_prompt: 'blurry, bad quality, watermark',
+          duration: parseInt(duration),
+          aspect_ratio: '9:16'
+        }
+      })
+    }
+  );
+
+  const data = await createRes.json();
+  console.log('Kling v1.6 fallback status:', createRes.status);
+
+  if (!createRes.ok) {
+    return res.status(createRes.status).json({ error: data.detail || data.error || JSON.stringify(data) });
+  }
+
+  if (data.output) {
+    const videoUrl = Array.isArray(data.output) ? data.output[0] : data.output;
+    if (videoUrl) return res.status(200).json({ success: true, videoUrl, prompt });
+  }
+
+  if (data.id) {
+    for (let i = 0; i < 40; i++) {
+      await new Promise(r => setTimeout(r, 3000));
+      const poll = await fetch(`https://api.replicate.com/v1/predictions/${data.id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const result = await poll.json();
+      if (result.status === 'succeeded') {
+        const videoUrl = Array.isArray(result.output) ? result.output[0] : result.output;
+        return res.status(200).json({ success: true, videoUrl, prompt });
+      }
+      if (result.status === 'failed') {
+        return res.status(500).json({ error: result.error || 'Failed' });
+      }
+    }
+  }
+
+  return res.status(504).json({ error: 'Timeout. Please try again.' });
+}
+
 function buildVideoPrompt(scenario, modelName) {
   const name = modelName || 'the model';
-
   const scenarios = {
-    pool: `${name} is relaxing by a luxury infinity pool, wearing a stylish bikini. She slowly turns to look at the camera with a natural smile, sun rays reflecting on the water. Cinematic slow motion, golden hour lighting, natural fluid movement.`,
-
-    beach: `${name} is walking along a beautiful white sand beach at sunset. Her hair flows naturally in the breeze, waves crashing gently behind her. She looks at the camera with a confident smile. Cinematic 4K, warm golden light, slow motion.`,
-
-    grwm: `${name} is doing her makeup in front of a large mirror in a luxurious bedroom. She applies lipstick, looks at herself and smiles at the camera. Natural realistic movement. Warm indoor lighting, beauty vlog style.`,
-
-    outfit: `${name} is showing off her outfit, doing a slow 360 degree turn in a stylish penthouse living room. She poses confidently, looks at the camera. Fashion editorial style, smooth camera movement.`,
-
-    studio: `${name} is posing in a professional photo studio with soft white lighting. She changes poses naturally — looking left, then at camera, then tilting head. Professional fashion photography movement.`,
-
-    gym: `${name} is working out in a modern gym. She does a few reps, then wipes her face and smiles at the camera confidently. Athletic, energetic, natural movement.`,
-
-    restaurant: `${name} is sitting at a luxury restaurant, enjoying a glass of champagne. She looks around and then smiles at the camera. Elegant, sophisticated atmosphere, candlelight.`,
-
-    travel: `${name} is standing at a stunning scenic viewpoint — cliffs overlooking the ocean. Her hair blows in the wind as she looks at the view and then turns to smile at camera. Cinematic travel vlog style.`,
-
-    dance: `${name} is dancing naturally to music in a stylish apartment, moving her body confidently and gracefully. She looks at camera with a playful smile. Natural fluid dance movement.`,
-
-    default: `${name} is moving naturally and confidently, looking at the camera with a beautiful smile. Cinematic, smooth movement, professional quality.`
+    pool: `${name} relaxing by a luxury infinity pool wearing a stylish bikini, slowly turning to look at camera with natural smile, sun rays reflecting on crystal blue water, cinematic golden hour lighting, smooth slow motion`,
+    beach: `${name} walking along white sand beach at sunset, hair flowing naturally in breeze, ocean waves behind her, confident natural smile at camera, cinematic warm golden light, 4K slow motion`,
+    grwm: `${name} getting ready in luxury bedroom, applying makeup in front of large mirror, looks at camera and smiles, warm indoor lighting, beauty vlog style, natural realistic movement`,
+    outfit: `${name} doing a slow elegant 360 degree turn in stylish penthouse, showing off outfit, poses confidently, looks at camera, fashion editorial style, smooth camera movement`,
+    studio: `${name} posing naturally in professional photo studio with soft lighting, changes poses gracefully, looks at camera with confidence, fashion photography style`,
+    gym: `${name} working out in modern gym, doing exercises, wipes face and smiles at camera confidently, athletic energetic movement, dynamic lighting`,
+    restaurant: `${name} sitting at luxury rooftop restaurant, enjoying champagne, looks around elegantly then smiles at camera, candlelight atmosphere, cinematic`,
+    travel: `${name} standing at breathtaking scenic viewpoint overlooking ocean cliffs, hair blowing in wind, turns to smile at camera, cinematic travel vlog style`,
+    dance: `${name} dancing naturally and gracefully to music in stylish apartment, fluid natural movement, playful confident smile at camera`,
+    default: `${name} moving naturally and confidently, looking at camera with beautiful smile, cinematic smooth movement, professional quality`
   };
-
   return scenarios[scenario] || scenarios.default;
 }
