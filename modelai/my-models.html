@@ -255,13 +255,20 @@
 
       <!-- VIDEO RESULT -->
       <div id="videoResult" style="display:none;">
-        <video id="resultVideo" controls style="width:100%;border-radius:var(--radius-lg);margin-bottom:1rem;max-height:400px;background:#000;"></video>
-        <div style="display:flex;gap:8px;">
-          <a id="downloadBtn" class="btn btn-generate" style="flex:1;justify-content:center;text-decoration:none;" download="fractal-video.mp4">
+        <video id="resultVideo" controls playsinline style="width:100%;border-radius:var(--radius-lg);margin-bottom:10px;max-height:400px;background:#000;"></video>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:1rem;">
+          <button class="btn btn-generate" onclick="downloadCurrentVideo()" style="justify-content:center;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            Download video
-          </a>
-          <button class="btn btn-outline" onclick="resetVideoModal()">Generate another</button>
+            Download
+          </button>
+          <button class="btn btn-outline" onclick="saveCurrentVideo()" style="justify-content:center;border-color:rgba(201,169,110,0.3);color:#C9A96E;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>
+            Save to model
+          </button>
+          <button class="btn btn-outline" onclick="resetVideoModal()" style="justify-content:center;">Generate another</button>
+        </div>
+        <div id="saveSuccessMsg" style="display:none;background:rgba(201,169,110,0.08);border:0.5px solid rgba(201,169,110,0.25);border-radius:10px;padding:8px 14px;font-size:12.5px;color:#C9A96E;text-align:center;">
+          ✓ Video saved to your model's gallery!
         </div>
       </div>
 
@@ -379,7 +386,8 @@
               imageUrl: src,
               scenario: scenarioId,
               modelName: activeModel.name,
-              duration: selectedDuration
+              duration: selectedDuration,
+              customPrompt: null // uses scenario-based prompt
             })
           });
           const data = await response.json();
@@ -442,16 +450,48 @@
     }
 
     function showVideoResult(videoUrl) {
+      currentVideoUrl = videoUrl;
       document.getElementById('videoGenerating').style.display = 'none';
       document.getElementById('videoResult').style.display = 'block';
       document.getElementById('videoModalClose').style.display = 'block';
-
+      document.getElementById('saveSuccessMsg').style.display = 'none';
       const video = document.getElementById('resultVideo');
       video.src = videoUrl;
-      video.play();
+      video.play().catch(() => {});
+    }
 
-      const dlBtn = document.getElementById('downloadBtn');
-      dlBtn.href = videoUrl;
+    let currentVideoUrl = null;
+
+    async function downloadCurrentVideo() {
+      if (!currentVideoUrl) return;
+      try {
+        const res = await fetch(currentVideoUrl);
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `fractal-video-${Date.now()}.mp4`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } catch(e) {
+        window.open(currentVideoUrl, '_blank');
+      }
+    }
+
+    function saveCurrentVideo() {
+      if (!currentVideoUrl || !activeModel) return;
+      const models = JSON.parse(localStorage.getItem('modelai_saved') || '[]');
+      const idx = models.findIndex(m => String(m.id) === String(activeModel.id));
+      if (idx !== -1) {
+        if (!models[idx].videos) models[idx].videos = [];
+        models[idx].videos.unshift({ url: currentVideoUrl, createdAt: new Date().toISOString() });
+        models[idx].posts = (models[idx].posts || 0) + 1;
+        localStorage.setItem('modelai_saved', JSON.stringify(models));
+      }
+      document.getElementById('saveSuccessMsg').style.display = 'block';
+      setTimeout(() => document.getElementById('saveSuccessMsg').style.display = 'none', 3000);
     }
 
     function resetVideoModal() {
