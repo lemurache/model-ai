@@ -352,51 +352,92 @@
       const src = activeModel.imageData || activeModel.image_url;
       if (!src) { alert('This model has no image. Please generate a new model first.'); return; }
 
-      // Show generating state
       document.getElementById('contentScenariosGrid').style.display = 'none';
-      document.querySelector('.dur-btn')?.closest('div')?.parentElement?.style.setProperty('display','none');
+      const durRow = document.querySelector('.dur-btn')?.closest('div')?.parentElement;
+      if (durRow) durRow.style.display = 'none';
       document.getElementById('videoGenerating').style.display = 'block';
       document.getElementById('videoModalClose').style.display = 'none';
 
-      // Timer
+      const scenario = CONTENT_SCENARIOS.find(s => s.id === scenarioId);
+      document.getElementById('videoGenTitle').textContent = `Generating "${scenario?.label}" video...`;
+
       let elapsed = 0;
       timerInterval = setInterval(() => {
-        elapsed += 1;
+        elapsed++;
         const el = document.getElementById('videoGenTimer');
         if (el) el.textContent = `${elapsed}s elapsed — usually takes 60-120s`;
       }, 1000);
 
-      // Update title based on scenario
-      const scenario = CONTENT_SCENARIOS.find(s => s.id === scenarioId);
-      document.getElementById('videoGenTitle').textContent = `Generating "${scenario?.label}" video...`;
-
       try {
-        const response = await fetch('/api/generate-video', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            imageUrl: src,
-            scenario: scenarioId,
-            modelName: activeModel.name,
-            duration: selectedDuration
-          })
-        });
+        // Step 1: Create prediction with retry for rate limit
+        let predictionId = null;
+        for (let attempt = 0; attempt < 5; attempt++) {
+          const response = await fetch('/api/generate-video', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              imageUrl: src,
+              scenario: scenarioId,
+              modelName: activeModel.name,
+              duration: selectedDuration
+            })
+          });
+          const data = await response.json();
 
-        const data = await response.json();
-        clearInterval(timerInterval);
+          if (response.status === 429) {
+            // Rate limited — wait and retry
+            const waitSec = (data.retryAfter || 15) + 2;
+            document.getElementById('videoGenSub').textContent = `Rate limited. Retrying in ${waitSec} seconds... (attempt ${attempt + 1}/5)`;
+            await new Promise(r => setTimeout(r, waitSec * 1000));
+            continue;
+          }
 
-        if (data.success && data.videoUrl) {
-          showVideoResult(data.videoUrl);
-        } else {
-          throw new Error(data.error || 'Generation failed');
+          if (!response.ok) throw new Error(data.error || 'Failed to start generation');
+
+          if (data.videoUrl) {
+            // Already done
+            clearInterval(timerInterval);
+            showVideoResult(data.videoUrl);
+            return;
+          }
+
+          predictionId = data.predictionId;
+          break;
         }
+
+        if (!predictionId) throw new Error('Could not start generation after 5 attempts. Please try again in a minute.');
+
+        // Step 2: Poll from browser
+        document.getElementById('videoGenSub').textContent = 'Kling AI is animating your model. This takes ~60-120 seconds.';
+
+        for (let i = 0; i < 60; i++) {
+          await new Promise(r => setTimeout(r, 3000));
+          const pollRes = await fetch('/api/generate-video', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ predictionId })
+          });
+          const result = await pollRes.json();
+
+          if (result.status === 'succeeded' && result.videoUrl) {
+            clearInterval(timerInterval);
+            showVideoResult(result.videoUrl);
+            return;
+          }
+          if (result.status === 'failed') {
+            throw new Error(result.error || 'Video generation failed');
+          }
+        }
+
+        throw new Error('Timeout after 3 minutes. Please try again.');
 
       } catch(err) {
         clearInterval(timerInterval);
         document.getElementById('videoGenerating').style.display = 'none';
         document.getElementById('contentScenariosGrid').style.display = 'grid';
+        if (durRow) durRow.style.display = 'flex';
         document.getElementById('videoModalClose').style.display = 'block';
-        alert('Video generation failed: ' + err.message + '\n\nPlease try again.');
+        alert('Video generation failed:\n' + err.message);
       }
     }
 
